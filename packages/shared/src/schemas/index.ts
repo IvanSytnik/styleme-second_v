@@ -13,12 +13,22 @@ export const transformByStyleIdSchema = z.object({
   styleId: z.coerce.number().int().min(1).max(40),
 });
 
+/**
+ * Day 4 (ADR-007): bounds updated to [MIN_CUSTOM_PROMPT_LENGTH, MAX_CUSTOM_PROMPT_LENGTH].
+ * `trim()` runs before `min` so whitespace padding cannot bypass the MIN bound.
+ */
 export const transformCustomSchema = z.object({
   hairstyle: z
     .string()
     .trim()
-    .min(2, 'Hairstyle description is too short')
-    .max(LIMITS.MAX_CUSTOM_PROMPT_LENGTH, 'Hairstyle description is too long'),
+    .min(
+      LIMITS.MIN_CUSTOM_PROMPT_LENGTH,
+      `Hairstyle description must be at least ${LIMITS.MIN_CUSTOM_PROMPT_LENGTH} characters`,
+    )
+    .max(
+      LIMITS.MAX_CUSTOM_PROMPT_LENGTH,
+      `Hairstyle description must be ${LIMITS.MAX_CUSTOM_PROMPT_LENGTH} characters or less`,
+    ),
 });
 
 export const grantRewardSchema = z.object({

@@ -18,22 +18,57 @@ import styles from './processing-screen.module.css';
  * busy (10–30s typical) we show an animated indeterminate progress band —
  * NO fake percentage. Day 6 will swap this for real polling progress.
  *
+ * Day 4 (ADR-007): dispatches to one of three api methods based on the
+ * `mode` set by the catalog view. Same mutation, same error UI — only
+ * the network call and the `styleName` shown differ.
+ *
  * On success → result screen via app store.
  * On error → friendly message + back/retry actions.
  */
 export function ProcessingScreen(): React.ReactElement {
   const image = useAppStore((s) => s.image);
+  const mode = useAppStore((s) => s.mode);
   const styleId = useAppStore((s) => s.selectedStyleId);
+  const customPrompt = useAppStore((s) => s.customPrompt);
+  const referenceImage = useAppStore((s) => s.referenceImage);
   const setResult = useAppStore((s) => s.setResult);
   const setScreen = useAppStore((s) => s.setScreen);
   const queryClient = useQueryClient();
 
-  const styleName = styleId !== null ? HAIRSTYLES_UI_BY_ID.get(styleId)?.name : null;
+  // Compute the display label per mode
+  const styleName: string | null = (() => {
+    if (mode === 'preset' && styleId !== null) {
+      return HAIRSTYLES_UI_BY_ID.get(styleId)?.name ?? null;
+    }
+    if (mode === 'custom' && customPrompt) {
+      // Truncate long prompts for the subtitle
+      return customPrompt.length > 60
+        ? `${customPrompt.slice(0, 57)}…`
+        : customPrompt;
+    }
+    if (mode === 'reference') {
+      return 'Reference photo';
+    }
+    return null;
+  })();
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!image || styleId === null) throw new Error('Missing image or style');
-      return api.transformByStyleId(image.blob, styleId);
+      if (!image) throw new Error('Missing image');
+      switch (mode) {
+        case 'preset': {
+          if (styleId === null) throw new Error('Missing style');
+          return api.transformByStyleId(image.blob, styleId);
+        }
+        case 'custom': {
+          if (!customPrompt) throw new Error('Missing prompt');
+          return api.transformCustom(image.blob, customPrompt);
+        }
+        case 'reference': {
+          if (!referenceImage) throw new Error('Missing reference image');
+          return api.transformWithReference(image.blob, referenceImage.blob);
+        }
+      }
     },
     onSuccess: (data) => {
       // Update cached balance with the post-transform snapshot from the API.
@@ -57,7 +92,11 @@ export function ProcessingScreen(): React.ReactElement {
           <h2 className={styles.errorTitle}>{err.title}</h2>
           <p className={styles.errorBody}>{err.body}</p>
           <div className={styles.errorActions}>
-            <button type="button" className={styles.secondaryButton} onClick={() => setScreen('catalog')}>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={() => setScreen('catalog')}
+            >
               ← Back
             </button>
             {err.retryable && (

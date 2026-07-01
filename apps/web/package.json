@@ -1,6 +1,6 @@
 {
   "name": "@styleme/web",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "private": true,
   "description": "StyleMe web app (Next.js 16 App Router)",
   "scripts": {
@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.9.1",
     "@styleme/shared": "*",
     "@supabase/supabase-js": "^2.45.4",
     "@tanstack/react-query": "^5.66.0",
@@ -19,6 +20,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.55.0",
+    "sonner": "^1.7.1",
     "zod": "^3.24.1",
     "zustand": "^5.0.3"
   },

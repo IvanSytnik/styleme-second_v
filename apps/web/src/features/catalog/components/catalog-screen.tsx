@@ -1,72 +1,39 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-
-import { FEMALE_HAIRSTYLES, MALE_HAIRSTYLES, type Gender, type HairstyleListItem } from '@styleme/shared';
+import { useState } from 'react';
 
 import { useAppStore } from '@/lib/app-store';
+
+import { CustomPromptView } from './custom-prompt-view';
+import { GalleryView } from './gallery-view';
+import { ModeSelector, type CatalogMode } from './mode-selector';
+import { ReferencePhotoView } from './reference-photo-view';
 
 import styles from './catalog-screen.module.css';
 
 /**
- * Catalog screen.
- * - Tabs for gender (female / male)
- * - Grid of styles with emoji + name
- * - Footer pinned with: back, photo preview, "Generate" CTA
+ * Catalog screen — Day 4 (ADR-007) two-tier layout.
  *
- * The list is sourced from `@styleme/shared` UI catalog — no network call.
+ * Top tier: mode selector (gallery / describe / reference) — input modality.
+ * Lower tier (only inside gallery): gender tabs — content category.
+ *
+ * The old Day 3 catalog jammed Women/Men next to Custom/Reference in one
+ * row, which mixes axes. This split keeps "how I choose" separate from
+ * "what I'm choosing among" and scales cleanly when we add Trending/Saved.
  */
 export function CatalogScreen(): React.ReactElement {
   const image = useAppStore((s) => s.image);
-  const selectedStyleId = useAppStore((s) => s.selectedStyleId);
-  const setSelectedStyleId = useAppStore((s) => s.setSelectedStyleId);
   const setScreen = useAppStore((s) => s.setScreen);
-
-  const [gender, setGender] = useState<Gender>('female');
-
-  const list: readonly HairstyleListItem[] = useMemo(
-    () => (gender === 'female' ? FEMALE_HAIRSTYLES : MALE_HAIRSTYLES),
-    [gender],
-  );
-
-  function start(): void {
-    if (selectedStyleId === null) return;
-    setScreen('processing');
-  }
+  const [mode, setMode] = useState<CatalogMode>('gallery');
 
   return (
     <div className={styles.screen}>
-      <div className={styles.tabs} role="tablist" aria-label="Hairstyle category">
-        {(['female', 'male'] as const).map((g) => (
-          <button
-            key={g}
-            type="button"
-            role="tab"
-            aria-selected={gender === g}
-            className={`${styles.tab} ${gender === g ? styles.tabActive : ''}`}
-            onClick={() => setGender(g)}
-          >
-            {g === 'female' ? 'Women' : 'Men'}
-          </button>
-        ))}
-      </div>
+      <ModeSelector value={mode} onChange={setMode} />
 
-      <div className={styles.grid} role="radiogroup" aria-label="Hairstyle">
-        {list.map((style) => (
-          <button
-            key={style.id}
-            type="button"
-            role="radio"
-            aria-checked={selectedStyleId === style.id}
-            className={`${styles.card} ${selectedStyleId === style.id ? styles.cardSelected : ''}`}
-            onClick={() => setSelectedStyleId(style.id)}
-          >
-            <span className={styles.cardEmoji} aria-hidden="true">
-              {style.emoji}
-            </span>
-            <span className={styles.cardName}>{style.name}</span>
-          </button>
-        ))}
+      <div className={styles.body}>
+        {mode === 'gallery' && <GalleryView />}
+        {mode === 'custom' && <CustomPromptView />}
+        {mode === 'reference' && <ReferencePhotoView />}
       </div>
 
       <footer className={styles.footer}>
@@ -85,14 +52,9 @@ export function CatalogScreen(): React.ReactElement {
           </div>
         )}
 
-        <button
-          type="button"
-          className={styles.primaryButton}
-          onClick={start}
-          disabled={selectedStyleId === null}
-        >
-          Generate ✨
-        </button>
+        {/* Right slot intentionally left blank — each view owns its own
+            primary CTA (Generate / Try this style / Try this hairstyle). */}
+        <span className={styles.footerSpacer} aria-hidden="true" />
       </footer>
     </div>
   );

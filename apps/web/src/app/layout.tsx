@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { Toaster } from 'sonner';
 
 import { AuthProvider, AuthTokenBridge } from '@/lib/auth-provider';
 import { QueryProvider } from '@/lib/query-provider';
@@ -30,7 +31,23 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ThemeProvider>
           <AuthProvider>
             <AuthTokenBridge />
-            <QueryProvider>{children}</QueryProvider>
+            <QueryProvider>
+              {children}
+              {/*
+                Day 4 (ADR-007): sonner Toaster — single instance at root.
+                richColors: maps toast.error/success/warning to semantic colors.
+                closeButton: a11y — users can dismiss before auto-dismiss.
+                position bottom-right: doesn't compete with sticky AppHeader (top)
+                or fixed catalog footer (bottom-center).
+              */}
+              <Toaster
+                position="bottom-right"
+                richColors
+                closeButton
+                theme="system"
+                toastOptions={{ duration: 5000 }}
+              />
+            </QueryProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

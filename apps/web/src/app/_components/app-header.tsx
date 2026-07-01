@@ -11,7 +11,12 @@ import styles from './app-header.module.css';
 
 /**
  * Top header — visible on every screen.
- * Shows brand, current quota balance, and the theme switcher.
+ * Shows brand, current quota balance, "Watch ad" affordance, theme switcher.
+ *
+ * Day 4 (ADR-007): "Watch ad" button visible-but-disabled with a "Soon" badge.
+ * The button makes NO network call — clicking does nothing, avoiding the 501
+ * that /api/billing/grant-reward returns in prod. Real AdSense integration
+ * lands in Day 6.
  */
 export function AppHeader(): React.ReactElement {
   const reset = useAppStore((s) => s.reset);
@@ -26,7 +31,12 @@ export function AppHeader(): React.ReactElement {
 
   return (
     <header className={styles.header}>
-      <button type="button" className={styles.brand} onClick={reset} aria-label="StyleMe — home">
+      <button
+        type="button"
+        className={styles.brand}
+        onClick={reset}
+        aria-label="StyleMe — home"
+      >
         <span className={styles.brandMark} aria-hidden="true" />
         <span className={styles.brandName}>StyleMe</span>
       </button>
@@ -48,6 +58,20 @@ export function AppHeader(): React.ReactElement {
             )}
           </div>
         )}
+
+        {/* Day 4: Watch ad Coming Soon — visible affordance, no network call. */}
+        <button
+          type="button"
+          className={styles.watchAd}
+          disabled
+          title="Coming soon — watch ads to earn extra generations"
+          aria-label="Watch ad for credit — coming soon"
+        >
+          <span aria-hidden="true">🎬</span>
+          <span className={styles.watchAdLabel}>Watch ad</span>
+          <span className={styles.comingSoon}>Soon</span>
+        </button>
+
         <ThemeSwitcher />
       </div>
     </header>

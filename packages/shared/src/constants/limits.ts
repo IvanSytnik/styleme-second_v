@@ -6,7 +6,18 @@ export const LIMITS = {
   MAX_FILE_SIZE_BYTES: 2 * 1024 * 1024,
   MAX_IMAGE_DIMENSION: 1024,
   JPEG_QUALITY: 90,
-  MAX_CUSTOM_PROMPT_LENGTH: 100,
+  /**
+   * Custom prompt length bounds.
+   *
+   * Day 4 (ADR-007): raised MAX from 100 to 200, added MIN of 10.
+   *  - MAX=200 fits length + colour + texture + fringe descriptors while
+   *    staying inside nano-banana's focused-output window (>250 chars starts
+   *    to lose focus for the same $0.04 cost).
+   *  - MIN=10 (after trim) blocks `hi`, `test`, single-emoji submissions
+   *    that would waste quota.
+   */
+  MIN_CUSTOM_PROMPT_LENGTH: 10,
+  MAX_CUSTOM_PROMPT_LENGTH: 200,
   MAX_JSON_BODY_BYTES: 256 * 1024,
 } as const;
 

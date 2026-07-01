@@ -1,0 +1,118 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.intro {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 14rem;
+  padding: 1.5rem;
+  background: var(--color-surface, #fff);
+  border: 2px dashed var(--color-border, #e5e7eb);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dropzone:hover,
+.dropzone:focus-visible {
+  border-color: var(--color-accent, #7c3aed);
+  background: var(--color-surface-elevated, #f9fafb);
+}
+
+.dropzone:focus-visible {
+  outline: 2px solid var(--color-accent, #7c3aed);
+  outline-offset: 2px;
+}
+
+.dragging {
+  border-color: var(--color-accent, #7c3aed);
+  background: var(--color-accent-soft, #ede9fe);
+}
+
+.hasPreview {
+  padding: 0;
+  border-style: solid;
+  min-height: auto;
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.preview {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 24rem;
+  object-fit: contain;
+  background: var(--color-surface, #fff);
+}
+
+.icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.placeholder {
+  font-weight: 500;
+  color: var(--color-text, #111);
+  text-align: center;
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.submit {
+  padding: 0.875rem 1.25rem;
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition:
+    transform 100ms ease,
+    opacity 150ms ease;
+  align-self: center;
+  min-width: 12rem;
+}
+
+.submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.submit:focus-visible {
+  outline: 2px solid var(--color-accent, #7c3aed);
+  outline-offset: 2px;
+}
+
+.submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
