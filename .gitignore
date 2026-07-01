@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Env files — NEVER commit secrets
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+apps/*/.env
+apps/*/.env.local
+packages/*/.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+logs/
+
+# IDE / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+coverage/
+*.lcov
+
+# Temporary
+tmp/
+temp/
+.cache/
+
+# Turbopack / Next.js
+.turbo/

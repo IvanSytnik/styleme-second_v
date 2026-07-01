@@ -1,0 +1,70 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border-1);
+  background: var(--bg-0);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.brandMark {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--gradient);
+  box-shadow: var(--shadow-2);
+}
+
+.brandName {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+}
+
+.right {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+}
+
+.balanceItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.balanceLabel {
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.balanceValue {
+  color: var(--text-1);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

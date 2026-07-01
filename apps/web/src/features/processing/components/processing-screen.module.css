@@ -1,0 +1,143 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 0;
+  text-align: center;
+}
+
+.preview {
+  position: relative;
+  width: 240px;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-3);
+  margin-bottom: 8px;
+}
+
+.preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 40%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0.1) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.title {
+  margin: 8px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-3);
+}
+
+.progressTrack {
+  width: 240px;
+  height: 4px;
+  background: var(--bg-2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progressBar {
+  height: 100%;
+  width: 35%;
+  background: var(--gradient);
+  border-radius: 4px;
+  animation: slide 1.8s ease-in-out infinite;
+}
+
+@keyframes slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(380%); }
+}
+
+.hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.errorBox {
+  margin-top: 32px;
+  padding: 24px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-lg);
+  max-width: 420px;
+  width: 100%;
+  text-align: left;
+}
+
+.errorTitle {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.errorBody {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+.errorActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.secondaryButton {
+  background: var(--bg-2);
+  color: var(--text-1);
+  border: 1px solid var(--border-1);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondaryButton:hover { background: var(--bg-3); }
+
+.primaryButton {
+  background: var(--gradient);
+  color: white;
+  border: 0;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-2);
+}
+
+.primaryButton:hover { transform: translateY(-1px); }

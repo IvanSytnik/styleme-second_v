@@ -1,0 +1,24 @@
+{
+  "name": "styleme",
+  "version": "3.0.0",
+  "private": true,
+  "description": "StyleMe — AI Hairstyle Try-On (monorepo)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:shared": "npm run build --workspace=@styleme/shared",
+    "dev:api": "npm run dev --workspace=@styleme/api",
+    "build:api": "npm run build --workspace=@styleme/api",
+    "start:api": "npm run start --workspace=@styleme/api",
+    "dev:web": "npm run dev --workspace=@styleme/web",
+    "build:web": "npm run build --workspace=@styleme/web",
+    "start:web": "npm run start --workspace=@styleme/web",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

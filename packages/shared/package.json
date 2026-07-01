@@ -1,0 +1,38 @@
+{
+  "name": "@styleme/shared",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Shared types, constants and catalog for StyleMe apps",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./hairstyles/prompts": {
+      "types": "./dist/hairstyles/prompts.d.ts",
+      "default": "./dist/hairstyles/prompts.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "hairstyles/prompts": ["dist/hairstyles/prompts.d.ts"]
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
