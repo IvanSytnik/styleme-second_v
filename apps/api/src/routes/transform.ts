@@ -9,6 +9,12 @@
  * record each successful generation to Supabase.
  *
  * Wire format: `multipart/form-data` (no more 50 MB base64 in JSON).
+ *
+ * Hotfix (post-Day 4): server-side retry with backoff for Replicate 429
+ * responses. Under $5 in Replicate credits the account rate limit drops to
+ * 6 req/min with burst=1, which surfaces to users as random single-shot
+ * "generation failed". We now transparently retry up to 3 times honouring
+ * the `retry_after` hint before surfacing RATE_LIMITED to the client.
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express';
@@ -45,6 +51,19 @@ const COST_CENTS_PER_GENERATION = 4;
 
 const replicate = new Replicate({ auth: env.REPLICATE_API_TOKEN });
 
+// ============================================================================
+// Replicate retry configuration
+// ============================================================================
+
+/** Total attempts (1 original + up to N-1 retries). */
+const REPLICATE_MAX_ATTEMPTS = 3;
+/** Cap on a single retry_after honoured from upstream. */
+const REPLICATE_MAX_RETRY_WAIT_MS = 10_000;
+/** Fallback wait when upstream doesn't tell us retry_after. */
+const REPLICATE_DEFAULT_RETRY_WAIT_MS = 5_000;
+/** Jitter added to every wait, to avoid thundering herd on shared quota. */
+const REPLICATE_JITTER_MS = 1_000;
+
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
@@ -69,21 +88,120 @@ async function optimizeImage(buffer: Buffer): Promise<Buffer> {
     .toBuffer();
 }
 
-const toDataUrl = (buffer: Buffer): string => `data:image/jpeg;base64,${buffer.toString('base64')}`;
+const toDataUrl = (buffer: Buffer): string =>
+  `data:image/jpeg;base64,${buffer.toString('base64')}`;
 
 function extractResultUrl(output: unknown): string {
-  if (output && typeof output === 'object' && 'url' in output && typeof (output as { url: () => string }).url === 'function') {
+  if (
+    output &&
+    typeof output === 'object' &&
+    'url' in output &&
+    typeof (output as { url: () => string }).url === 'function'
+  ) {
     return (output as { url: () => string }).url();
   }
   if (typeof output === 'string') return output;
   if (Array.isArray(output) && output.length > 0) {
     const first = output[0];
     if (typeof first === 'string') return first;
-    if (first && typeof first === 'object' && 'url' in first && typeof (first as { url: () => string }).url === 'function') {
+    if (
+      first &&
+      typeof first === 'object' &&
+      'url' in first &&
+      typeof (first as { url: () => string }).url === 'function'
+    ) {
       return (first as { url: () => string }).url();
     }
   }
-  throw new HttpError(502, ERROR_CODES.UPSTREAM_FAILED, 'Unexpected output format from upstream');
+  throw new HttpError(
+    502,
+    ERROR_CODES.UPSTREAM_FAILED,
+    'Unexpected output format from upstream',
+  );
+}
+
+// ============================================================================
+// 429 detection + retry helpers
+// ============================================================================
+
+/**
+ * True if the error looks like a Replicate 429.
+ *
+ * Replicate SDK throws an `ApiError` with `.response` (Fetch Response) and a
+ * message like `Request to ... failed with status 429 Too Many Requests: {...}`.
+ * We check both channels — response.status is authoritative but doesn't always
+ * survive serialisation, so the message pattern is our safety net.
+ */
+function isReplicate429(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  if (err.name !== 'ApiError') return false;
+  const withResponse = err as Error & { response?: { status?: number } };
+  if (withResponse.response?.status === 429) return true;
+  return /\bstatus\s+429\b/i.test(err.message);
+}
+
+/**
+ * Parse `retry_after` (seconds) from the JSON body embedded in the ApiError
+ * message. Returns milliseconds, clamped to REPLICATE_MAX_RETRY_WAIT_MS.
+ * Falls back to REPLICATE_DEFAULT_RETRY_WAIT_MS if not found.
+ */
+function parseRetryAfterMs(err: unknown): number {
+  const msg = err instanceof Error ? err.message : '';
+  const match = /"retry_after"\s*:\s*(\d+(?:\.\d+)?)/.exec(msg);
+  const seconds = match ? Number.parseFloat(match[1]!) : NaN;
+  const ms = Number.isFinite(seconds)
+    ? Math.min(seconds * 1000, REPLICATE_MAX_RETRY_WAIT_MS)
+    : REPLICATE_DEFAULT_RETRY_WAIT_MS;
+  return ms + Math.floor(Math.random() * REPLICATE_JITTER_MS);
+}
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Run `replicate.run('google/nano-banana', ...)` with server-side 429 retry.
+ *
+ * - On non-429 error: throws immediately (caller decides how to surface).
+ * - On 429 with attempts remaining: sleeps for `retry_after` (+ jitter) and retries.
+ * - On 429 after final attempt: throws HttpError(429, RATE_LIMITED) with the
+ *   latest retryAfterMs so the client can present a helpful message.
+ *
+ * NOTE: Replicate doesn't bill 429s — they reject before generation — so
+ * retries are financially free.
+ */
+async function runReplicateWithRetry(input: unknown, userId: string): Promise<unknown> {
+  let lastRetryAfterMs = 0;
+  for (let attempt = 1; attempt <= REPLICATE_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      return await replicate.run('google/nano-banana', { input: input as Record<string, unknown> });
+    } catch (err) {
+      if (!isReplicate429(err)) throw err;
+
+      lastRetryAfterMs = parseRetryAfterMs(err);
+
+      if (attempt < REPLICATE_MAX_ATTEMPTS) {
+        logger.warn(
+          { userId, attempt, retryAfterMs: lastRetryAfterMs },
+          '[transform] replicate 429, retrying',
+        );
+        await sleep(lastRetryAfterMs);
+        continue;
+      }
+
+      logger.warn(
+        { userId, attempts: REPLICATE_MAX_ATTEMPTS },
+        '[transform] replicate 429, giving up',
+      );
+      throw new HttpError(
+        429,
+        ERROR_CODES.RATE_LIMITED,
+        'Servers are busy right now. Please try again in a moment.',
+        { retryAfterMs: lastRetryAfterMs, attempts: REPLICATE_MAX_ATTEMPTS },
+      );
+    }
+  }
+  // Unreachable — loop either returns or throws. Satisfies control flow analysis.
+  throw new HttpError(500, ERROR_CODES.INTERNAL_ERROR, 'Retry loop exited unexpectedly');
 }
 
 interface RunTransformArgs {
@@ -115,16 +233,19 @@ async function runTransform(args: RunTransformArgs): Promise<TransformResult> {
     refDataUrl = toDataUrl(refOptimized);
   }
 
-  // 3. Call upstream
+  // 3. Call upstream (with 429 retry)
   const input = {
     prompt: args.prompt,
     image_input: refDataUrl ? [mainDataUrl, refDataUrl] : [mainDataUrl],
   };
   let resultUrl: string;
   try {
-    const output = await replicate.run('google/nano-banana', { input });
+    const output = await runReplicateWithRetry(input, args.userId);
     resultUrl = extractResultUrl(output);
   } catch (err) {
+    // 429-after-retries is already an HttpError from runReplicateWithRetry.
+    // Let it fall through error-handler middleware untouched.
+    if (err instanceof HttpError) throw err;
     logger.error({ err, userId: args.userId }, '[transform] upstream failed');
     throw new HttpError(502, ERROR_CODES.UPSTREAM_FAILED, 'Image generation failed upstream');
   }
