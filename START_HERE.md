@@ -1,151 +1,171 @@
-# 🚀 START_HERE — Day 4 v2
+# 🚀 START_HERE — Day 5
 
-> **What's inside:** Custom prompt + Reference photo + toast notifications + two-tier catalog. Backend untouched.
-> **Compatible with:** clean Day 3 repo (verified against real Day 3 source).
+> **What's inside:** Generation history + soft delete + Regenerate.
+> **Compatible with:** clean Day 4 repo (post-Day-4-merge + hotfix-429).
 
 ---
 
 ## 📦 What changes
 
-This pack is **replacement + additive** — extract on top of your repo root.
-All web/api entry points, providers, and `page.tsx` are preserved.
+Extract on top of your repo root. This pack is replacement + additive; the
+Day 3 file layout and `page.tsx` import surface are preserved.
 
 ### Modified files (replace existing)
 
 ```
 packages/shared/
-├── package.json                                    ← bump 0.2.0 → 0.3.0
+├── package.json                                    ← bump 0.3.0 → 0.4.0
 └── src/
-    ├── constants/limits.ts                         ← + MIN 10, MAX 200
-    └── schemas/index.ts                            ← trim + new bounds
+    ├── types/api.ts                                ← + Generation.mode/customPrompt/deletedAt + GenerationListPage
+    └── schemas/index.ts                            ← + listGenerationsQuerySchema
 
-apps/web/
-├── package.json                                    ← + sonner, + @hookform/resolvers
-└── src/
-    ├── app/
-    │   ├── layout.tsx                              ← + <Toaster />
-    │   └── _components/
-    │       ├── app-header.tsx                      ← + Watch ad Coming Soon
-    │       └── app-header.module.css               ← + watch-ad styles
-    ├── features/
-    │   ├── catalog/components/
-    │   │   ├── catalog-screen.tsx                  ← two-tier layout (ModeSelector + views)
-    │   │   └── catalog-screen.module.css           ← extended for footer
-    │   └── processing/components/
-    │       └── processing-screen.tsx               ← 3-mode dispatch
-    └── lib/
-        └── app-store.ts                            ← + mode, customPrompt, referenceImage
+apps/api/src/
+├── server.ts                                       ← mount generationsRouter + CORS DELETE
+├── db/generations.ts                               ← insert(mode/customPrompt) + listGenerations + softDeleteGeneration
+└── routes/transform.ts                             ← pass mode/customPrompt to insertGeneration
+
+apps/web/src/
+├── app/
+│   ├── page.tsx                                    ← route history / history-detail
+│   └── _components/
+│       ├── app-header.tsx                          ← History button
+│       └── app-header.module.css
+├── lib/
+│   ├── app-store.ts                                ← + history screens + detailGenerationId
+│   └── api-client.ts                               ← listGenerations + deleteGeneration
+└── features/processing/components/
+    └── processing-screen.tsx                        ← invalidate generations on success
 ```
 
 ### New files (create)
 
 ```
-apps/web/src/features/catalog/components/
-├── mode-selector.tsx
-├── mode-selector.module.css
-├── gallery-view.tsx                                ← Women/Men tabs extracted
-├── gallery-view.module.css
-├── custom-prompt-view.tsx                          ← RHF + Zod
-├── custom-prompt-view.module.css
-├── reference-photo-view.tsx                        ← drag&drop + inline resize
-└── reference-photo-view.module.css
+supabase/migrations/
+└── 20260702000000_history_and_soft_delete.sql
+
+apps/web/src/features/history/
+├── api/
+│   ├── use-generations.ts                          ← useInfiniteQuery
+│   └── use-delete-generation.ts                    ← optimistic delete
+├── lib/
+│   ├── regenerate.ts                               ← useRegenerate() helper
+│   └── relative-time.ts                            ← Intl.RelativeTimeFormat wrapper
+└── components/
+    ├── history-screen.tsx
+    ├── history-screen.module.css
+    ├── history-card.tsx
+    ├── history-card.module.css
+    ├── history-detail-screen.tsx
+    └── history-detail-screen.module.css
 
 docs/adr/
-└── 007-day4-stack.md
+└── 008-history-and-soft-delete.md
 ```
 
-### Untouched (Day 3 preserved)
+### Untouched
 
-- `apps/api/**` — backend already supports all three transform endpoints
-- `apps/web/src/app/page.tsx` — routing unchanged
-- `apps/web/src/lib/api-client.ts` — all three transform methods already exist
-- `apps/web/src/lib/error-messages.ts` — existing `describeError()` covers our needs
-- `apps/web/src/lib/auth-provider.tsx`, `query-provider.tsx`
-- `apps/web/src/features/upload/**`, `features/result/**`, `features/theme/**`
+Backend: middleware, lib/*, other routes.
+Frontend: catalog/, upload/, result/, theme/, all providers.
 
 ---
 
 ## ⚙️ Install
 
 ```bash
-# 1. Extract on top of repo root (this pack has no root folder wrapper)
-cd ~/path/to/styleme-repo
-unzip -o ~/Downloads/styleme-v3-day4-v2.zip -d .
+cd ~/Downloads/styleme-second_v
 
-# 2. Install new deps
+# 1. New feature branch
+git checkout main && git pull
+git checkout -b day-5/history
+
+# 2. Extract
+unzip -o ~/Downloads/styleme-v3-day5.zip -d .
+
+# 3. Install (no new deps)
 npm install
 
-# 3. Rebuild shared (new constants + schema bounds)
+# 4. Rebuild shared (new types)
 npm run build:shared
+
+# 5. Apply the migration
+#    Option A — Supabase Dashboard → SQL Editor → paste contents of
+#    supabase/migrations/20260702000000_history_and_soft_delete.sql → Run
+#
+#    Option B — psql / supabase CLI if you have it wired up
 ```
+
+**Migration is idempotent** — safe to run multiple times. Verify in the
+SQL editor:
+
+```sql
+select column_name, data_type, is_nullable
+from information_schema.columns
+where table_schema = 'public' and table_name = 'generations'
+order by ordinal_position;
+```
+
+You should see `mode`, `custom_prompt`, `deleted_at`.
 
 ---
 
-## ✅ E2E smoke checklist (run before commit)
+## ✅ E2E smoke checklist
 
-> Lesson from Day 2: **"build green ≠ runtime green"**. Walk these 8 steps.
+Two terminals as usual (`npm run dev:api`, `npm run dev:web`).
 
-### Terminals
+1. **Header** — new **🕘 History** button appears next to Watch ad.
 
-```bash
-# Terminal 1 — backend
-cd apps/api && npm run dev
-# expect: "api listening on :3001" + "redis connected" + "supabase ok"
-```
+2. **Empty state.** Fresh account → History → "No generations yet" with
+   Try-your-first-hairstyle CTA. Click → goes to Upload.
 
-```bash
-# Terminal 2 — frontend
-cd apps/web && npm run dev
-# expect: "Local: http://localhost:3000"
-# Open browser → hard refresh (Cmd+Shift+R)
-```
+3. **Populate.** Do 1 preset + 1 custom + 1 reference generation.
 
-### Checks
+4. **History grid.** Open History → 3 cards, most-recent first. Result
+   image, name, "just now" / "2 minutes ago".
 
-1. **Upload screen** — load a selfie (drag&drop or camera). Navigates to catalog.
+5. **Custom label.** The custom card shows the prompt text (truncated),
+   not "Custom style".
 
-2. **Gallery mode** (default).
-   - Three cards at top: **Gallery / Describe / Reference**. Gallery selected.
-   - Women/Men tabs below.
-   - Click a hairstyle card → it's highlighted.
-   - Click **Generate ✨** → processing screen shows the hairstyle name
-     (e.g. "Классическое каре") → result within 15–30s.
+6. **Detail.** Click any card → full-screen detail with mode badge,
+   date, big image, 3 actions + Delete.
 
-3. **Describe mode**.
-   - Click **Describe** card. Textarea appears.
-   - Type `hi` (2 chars) → submit disabled, help text shows `at least 10 characters`.
-   - Type 10 chars → submit enabled.
-   - Type 200 chars → counter shows `200 / 200` without red.
-   - Type 201 chars → counter red + bold, submit disabled.
-   - Submit with valid prompt → processing screen shows a truncated
-     version of the prompt as subtitle → result.
+7. **Regenerate.** Click Regenerate on a preset card → toast "Upload a
+   photo to try …" → Upload screen appears with your selected style
+   already in the store. Upload → catalog is pre-selected → Generate.
 
-4. **Reference mode**.
-   - Click **Reference** card. Dropzone appears.
-   - Drop a photo → preview appears.
-   - Click **Try this hairstyle ✨** → processing screen shows
-     "Reference photo" → result.
+8. **Download.** Downloads a `styleme-<name>.jpg` file.
 
-5. **Toasts**.
-   - Reference mode: try drop-loading a `.pdf` or `.gif` → bottom-right
-     toast: `Unsupported format. Please use JPEG, PNG, or WebP.`
+9. **Share.** On mobile → native share sheet. Desktop → toast "Link
+   copied".
 
-6. **Watch ad button** (header).
-   - Visible, disabled, badge **Soon**.
-   - Hover → tooltip.
-   - Click → **nothing happens**. Check DevTools Network — no request fires.
+10. **Delete.**
+    - Tap Delete → button becomes red "Tap again to confirm delete" + Cancel appears.
+    - Tap Cancel → back to normal.
+    - Tap Delete twice → row disappears instantly (optimistic), toast
+      "Generation deleted", you land back on History with one fewer card.
+    - Refresh page → the deleted row stays gone (soft-delete persisted).
 
-7. **Quota exhaustion** (optional — will burn 3 real generations).
-   - Do 3 generations. On the 4th → in-processing error box shows
-     "No credits left".
+11. **Infinite scroll.** If you have 20+ generations, scrolling near the
+    bottom loads the next page automatically. "Loading more…" briefly.
+    When you reach the end → "You've seen everything."
 
-8. **Build**:
-   ```bash
-   npm run build:shared
-   cd apps/web && npm run build
-   cd ../api && npm run build
-   ```
-   All three should complete with no warnings/errors.
+12. **DB check.**
+    ```sql
+    select id, mode, style_name, custom_prompt, deleted_at, created_at
+    from public.generations
+    order by created_at desc
+    limit 10;
+    ```
+    - `mode` present on all new rows
+    - `custom_prompt` only for `mode='custom'`
+    - `deleted_at` for the row you deleted
+
+13. **Build.**
+    ```bash
+    npm run build:shared
+    (cd apps/web && npm run build)
+    (cd apps/api && npm run build)
+    ```
+    Zero warnings/errors.
 
 ---
 
@@ -153,31 +173,47 @@ cd apps/web && npm run dev
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `Cannot find module 'sonner'` | Forgot `npm install` after unzip | `npm install` at repo root |
-| `Cannot find module '@styleme/shared/...'` after edits to shared | Didn't rebuild shared | `npm run build:shared` |
-| Toast doesn't show | `<Toaster />` missing from `layout.tsx` | Verify layout.tsx was replaced |
-| Custom prompt not validated on server | api using stale shared build | `npm run build:shared` + restart api |
-| `EADDRINUSE :::3001` | Zombie from prior run | `lsof -ti:3001 \| xargs kill -9` |
-| Processing screen shows blank subtitle | store not updated to Day 4 shape | Verify `apps/web/src/lib/app-store.ts` was replaced |
-| Two `styleme-v3-*` folders in same tree | Multi-lockfile bug from Next Turbopack | `rm -rf` the duplicate; keep only one repo copy |
+| History screen 500s | Migration not applied | Run the SQL from supabase/migrations/ |
+| `custom_prompt` column not found | Same as above | Run the migration |
+| Delete button no-op | Not authenticated | Refresh page (Supabase session might be stale) |
+| Cards missing / grid empty despite generations existing | Cache staleness | History screen focuses → refetch triggers; if not, hard refresh |
+| CORS error on DELETE | Server not restarted after changes | Restart `dev:api` |
+| `Module not found: '@styleme/shared'` | Forgot `npm run build:shared` | Rebuild |
+| Migration fails on `alter column mode set not null` | Old rows with NULL mode existed but backfill was skipped | Re-run migration — it's idempotent |
 
 ---
 
 ## 📝 Update memory after successful smoke
 
-In `PROJECT_MEMORY.md` → **Architecture Decisions**: add
-```
-- ADR-007 — Day 4 stack (sonner, RHF/Zod, two-tier catalog, mode-based dispatch)
-```
-
-Move Day 4 from `In Progress` → `Completed`.
-
-Bump `@styleme/shared` note to v0.3.0 in the Tech Stack section.
+`PROJECT_MEMORY.md`:
+- Move Day 5 from `In Progress` → `Completed`
+- Under **Architecture Decisions** add:
+  `- ADR-008 — Day 5 (history + soft delete + regenerate)`
+- Bump `@styleme/shared` note to v0.4.0
 
 ---
 
-## 🚦 Ready for Day 5?
+## 🚦 Ready for Day 6?
 
-When smoke is green — reply **"ready for Day 5"** and we start on generation
-history from Supabase (`useInfiniteQuery` + regenerate-from-history that
-re-uses the same `mode` dispatch pattern introduced here).
+When smoke is green → merge to main → ready for Day 6 (AdSense rewarded video).
+
+```bash
+git add -A
+git commit -m "feat(day-5): history + soft delete + regenerate
+
+- schema: mode enum, custom_prompt, deleted_at + partial index + DELETE RLS
+- api: /api/generations GET (cursor paginated) + DELETE
+- transform: record mode + customPrompt on insert
+- web: features/history/ with useInfiniteQuery + optimistic delete
+- header: History button
+- store: history + history-detail screens
+
+Ref: docs/adr/008-history-and-soft-delete.md"
+
+git push -u origin day-5/history
+git checkout main
+git merge day-5/history
+git push
+git branch -d day-5/history
+git push origin --delete day-5/history
+```

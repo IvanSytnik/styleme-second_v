@@ -2,6 +2,8 @@
 
 import { useAppStore } from '@/lib/app-store';
 import { CatalogScreen } from '@/features/catalog/components/catalog-screen';
+import { HistoryDetailScreen } from '@/features/history/components/history-detail-screen';
+import { HistoryScreen } from '@/features/history/components/history-screen';
 import { ProcessingScreen } from '@/features/processing/components/processing-screen';
 import { ResultScreen } from '@/features/result/components/result-screen';
 import { UploadScreen } from '@/features/upload/components/upload-screen';
@@ -12,9 +14,10 @@ import styles from './page.module.css';
 /**
  * Main flow router.
  *
- * Screens are switched via the Zustand store (`screen`) rather than URL —
- * Day 3 ships as a single-page flow. URL routing (so users can deep-link
- * to /upload, /catalog, /result/:id) can come in a later iteration if needed.
+ * Screens are switched via the Zustand store (`screen`). URL routing is
+ * a future iteration (Day 9+).
+ *
+ * Day 5 (ADR-008): + history + history-detail screens.
  */
 export default function HomePage(): React.ReactElement {
   const screen = useAppStore((s) => s.screen);
@@ -27,6 +30,8 @@ export default function HomePage(): React.ReactElement {
         {screen === 'catalog' && <CatalogScreen />}
         {screen === 'processing' && <ProcessingScreen />}
         {screen === 'result' && <ResultScreen />}
+        {screen === 'history' && <HistoryScreen />}
+        {screen === 'history-detail' && <HistoryDetailScreen />}
       </main>
     </>
   );

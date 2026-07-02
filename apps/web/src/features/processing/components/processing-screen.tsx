@@ -14,16 +14,10 @@ import styles from './processing-screen.module.css';
 /**
  * Processing screen.
  *
- * Kicks off the transform mutation immediately on mount. While Replicate is
- * busy (10–30s typical) we show an animated indeterminate progress band —
- * NO fake percentage. Day 6 will swap this for real polling progress.
- *
- * Day 4 (ADR-007): dispatches to one of three api methods based on the
- * `mode` set by the catalog view. Same mutation, same error UI — only
- * the network call and the `styleName` shown differ.
- *
- * On success → result screen via app store.
- * On error → friendly message + back/retry actions.
+ * Kicks off the transform mutation on mount. Dispatches to the correct
+ * api method based on `mode` from the store (Day 4). Invalidates the
+ * generations infinite query on success so the History screen picks
+ * up the new row (Day 5).
  */
 export function ProcessingScreen(): React.ReactElement {
   const image = useAppStore((s) => s.image);
@@ -35,13 +29,11 @@ export function ProcessingScreen(): React.ReactElement {
   const setScreen = useAppStore((s) => s.setScreen);
   const queryClient = useQueryClient();
 
-  // Compute the display label per mode
   const styleName: string | null = (() => {
     if (mode === 'preset' && styleId !== null) {
       return HAIRSTYLES_UI_BY_ID.get(styleId)?.name ?? null;
     }
     if (mode === 'custom' && customPrompt) {
-      // Truncate long prompts for the subtitle
       return customPrompt.length > 60
         ? `${customPrompt.slice(0, 57)}…`
         : customPrompt;
@@ -71,14 +63,13 @@ export function ProcessingScreen(): React.ReactElement {
       }
     },
     onSuccess: (data) => {
-      // Update cached balance with the post-transform snapshot from the API.
       queryClient.setQueryData(['balance'], data.balance);
+      // Day 5: history now has one more row; invalidate so next open refetches.
+      void queryClient.invalidateQueries({ queryKey: ['generations', 'infinite'] });
       setResult(data.resultImage, data.style);
     },
   });
 
-  // Auto-start the mutation once on mount. React 19 strict mode double-invokes
-  // effects in dev, so we guard with a ref-equivalent via the mutation's own state.
   useEffect(() => {
     if (mutation.isIdle) mutation.mutate();
     // eslint-disable-next-line react-hooks/exhaustive-deps

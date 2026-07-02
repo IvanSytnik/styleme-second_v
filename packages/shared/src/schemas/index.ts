@@ -40,6 +40,20 @@ export const grantRewardSchema = z.object({
   token: z.string().min(1),
 });
 
+/**
+ * Day 5 (ADR-008): pagination for GET /api/generations.
+ *
+ * `cursor` is a base64-encoded (createdAt, id) tuple issued by the server.
+ * Clients pass it back verbatim; we don't validate its shape here beyond
+ * "string, sanity-limited length" because malformed cursors just yield
+ * an empty page rather than throwing.
+ */
+export const listGenerationsQuerySchema = z.object({
+  cursor: z.string().max(256).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+
 export type TransformByStyleIdInput = z.infer<typeof transformByStyleIdSchema>;
 export type TransformCustomInput = z.infer<typeof transformCustomSchema>;
 export type GrantRewardInput = z.infer<typeof grantRewardSchema>;
+export type ListGenerationsQuery = z.infer<typeof listGenerationsQuerySchema>;

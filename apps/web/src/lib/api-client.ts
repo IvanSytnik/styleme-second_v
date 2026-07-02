@@ -4,12 +4,15 @@
  * - Business endpoints (`/api/*`) use the shared envelope `ApiResponse<T>`.
  * - System endpoints (`/health`) return a plain object.
  * - Bearer token (Supabase JWT) attached automatically when available.
+ *
+ * Day 5: + listGenerations (cursor pagination) + deleteGeneration.
  */
 
 import type {
   ApiResponse,
   BillingBalance,
   ErrorCode,
+  GenerationListPage,
   HairstyleListItem,
   HealthCheckResponse,
   TransformResult,
@@ -130,4 +133,24 @@ export const api = {
     fd.append('reference', reference);
     return request<TransformResult>('/api/transform/reference', { method: 'POST', body: fd });
   },
+
+  // ==========================================================================
+  // Day 5 — Generations history
+  // ==========================================================================
+
+  /**
+   * Cursor-paginated list of the user's generations.
+   * @param cursor opaque token returned by the previous page (or undefined for the first)
+   * @param limit  1..50, default 20
+   */
+  listGenerations: (opts: { cursor?: string; limit?: number } = {}) => {
+    const params = new URLSearchParams();
+    if (opts.cursor) params.set('cursor', opts.cursor);
+    if (opts.limit) params.set('limit', String(opts.limit));
+    const qs = params.toString();
+    return request<GenerationListPage>(`/api/generations${qs ? `?${qs}` : ''}`);
+  },
+
+  deleteGeneration: (id: string) =>
+    request<{ deleted: true }>(`/api/generations/${id}`, { method: 'DELETE' }),
 };

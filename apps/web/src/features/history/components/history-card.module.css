@@ -1,0 +1,68 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition:
+    border-color 150ms ease,
+    transform 100ms ease;
+}
+
+.card:hover {
+  border-color: var(--color-accent, #7c3aed);
+  transform: translateY(-2px);
+}
+
+.card:focus-within {
+  border-color: var(--color-accent, #7c3aed);
+}
+
+.image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+  background: var(--color-surface-elevated, #f9fafb);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.625rem 0.75rem 0.75rem;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--color-text, #111);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.date {
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.openButton {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  /* Actual focus ring comes from the visible focus-within on .card */
+}
+
+.openButton:focus-visible {
+  outline: 2px solid var(--color-accent, #7c3aed);
+  outline-offset: -2px;
+  border-radius: 0.75rem;
+}

@@ -2,43 +2,36 @@
  * Global app state for the generation flow.
  *
  * Lives outside React Query because it tracks UI navigation between screens,
- * not server-derived data. Server state (catalog, balance, transform result)
- * stays in React Query.
+ * not server-derived data. Server state (catalog, balance, transform result,
+ * generation list) stays in React Query.
  *
- * Day 4 (ADR-007): extended with `mode` + custom prompt + reference image
- * to drive three transform variants (preset / custom / reference) through
- * the same processing screen.
+ * Day 5 (ADR-008): + 'history' and 'history-detail' screens.
+ * `detailGenerationId` carries which row to show when in history-detail.
+ * The row itself lives in React Query cache (avoid duplicating server state).
  */
 
 'use client';
 
 import { create } from 'zustand';
 
-export type Screen = 'upload' | 'catalog' | 'processing' | 'result';
+export type Screen =
+  | 'upload'
+  | 'catalog'
+  | 'processing'
+  | 'result'
+  | 'history'
+  | 'history-detail';
 
-/**
- * Which transform pipeline the processing screen should run.
- * - `preset` uses selectedStyleId
- * - `custom` uses customPrompt
- * - `reference` uses referenceImage
- */
 export type TransformMode = 'preset' | 'custom' | 'reference';
 
 export interface UploadedImage {
-  /** Original File from the user, preserved so we can re-process if needed. */
   file: File;
-  /** Object URL for preview rendering. Caller must revoke. */
   previewUrl: string;
-  /** Resized JPEG ready for upload. */
   blob: Blob;
   width: number;
   height: number;
 }
 
-/**
- * Reference image is a lighter struct than UploadedImage — we only need
- * a blob for the API call and a preview URL for the pre-generate confirmation.
- */
 export interface ReferenceImage {
   previewUrl: string;
   blob: Blob;
@@ -47,21 +40,15 @@ export interface ReferenceImage {
 interface AppState {
   screen: Screen;
   image: UploadedImage | null;
-
-  /** Which pipeline to run. Set by catalog view immediately before setScreen('processing'). */
   mode: TransformMode;
-
-  /** Preset mode. */
   selectedStyleId: number | null;
-
-  /** Custom mode. Trimmed to schema bounds by the form before assignment. */
   customPrompt: string | null;
-
-  /** Reference mode. */
   referenceImage: ReferenceImage | null;
-
   resultUrl: string | null;
   resultStyleName: string | null;
+
+  /** Day 5: which generation to render on the history-detail screen. */
+  detailGenerationId: string | null;
 
   setScreen: (screen: Screen) => void;
   setImage: (image: UploadedImage | null) => void;
@@ -72,6 +59,8 @@ interface AppState {
   setReferenceImage: (ref: ReferenceImage | null) => void;
 
   setResult: (url: string, styleName: string) => void;
+  setDetailGenerationId: (id: string | null) => void;
+
   reset: () => void;
 }
 
@@ -84,6 +73,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   referenceImage: null,
   resultUrl: null,
   resultStyleName: null,
+  detailGenerationId: null,
 
   setScreen: (screen) => set({ screen }),
 
@@ -108,6 +98,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   setResult: (resultUrl, resultStyleName) =>
     set({ resultUrl, resultStyleName, screen: 'result' }),
 
+  setDetailGenerationId: (detailGenerationId) => set({ detailGenerationId }),
+
   reset: () => {
     const prevImage = get().image;
     if (prevImage?.previewUrl) URL.revokeObjectURL(prevImage.previewUrl);
@@ -122,6 +114,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       referenceImage: null,
       resultUrl: null,
       resultStyleName: null,
+      detailGenerationId: null,
     });
   },
 }));

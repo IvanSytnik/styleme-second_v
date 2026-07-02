@@ -10,6 +10,9 @@
  *  - Multipart uploads (no more 50 MB base64 JSON)
  *  - Pino structured logging with request-id
  *  - Sanitized error envelope (no leaked internals in production)
+ *
+ * Day 5 (ADR-008): + /api/generations (list, delete).
+ * CORS methods list extended with DELETE.
  */
 
 import express from 'express';
@@ -25,17 +28,15 @@ import { errorHandler } from './middleware/error-handler';
 import { ipRateLimit } from './middleware/rate-limit';
 import { requestId } from './middleware/request-id';
 import { billingRouter } from './routes/billing';
+import { generationsRouter } from './routes/generations';
 import { hairstylesRouter } from './routes/hairstyles';
 import { healthRouter } from './routes/health';
 import { transformRouter } from './routes/transform';
 
 const app = express();
 
-// Behind a proxy (Railway), trust the first hop so req.ip reflects the real client.
 app.set('trust proxy', 1);
 
-// Security headers. We override `crossOriginResourcePolicy` so the API
-// can serve responses to the Vercel-hosted web app.
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 app.use(requestId);
@@ -51,15 +52,13 @@ app.use(
 app.use(
   cors({
     origin: env.FRONTEND_URL,
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'DELETE'],
     credentials: true,
   }),
 );
 
-// Small JSON body for metadata endpoints. Transform endpoints use multipart.
 app.use(express.json({ limit: LIMITS.MAX_JSON_BODY_BYTES }));
 
-// IP-level rate limit applied to all /api/* routes.
 app.use('/api', ipRateLimit);
 
 // Routes
@@ -67,6 +66,7 @@ app.use(healthRouter);
 app.use(hairstylesRouter);
 app.use(billingRouter);
 app.use(transformRouter);
+app.use(generationsRouter);
 
 // 404
 app.use((req, res) => {

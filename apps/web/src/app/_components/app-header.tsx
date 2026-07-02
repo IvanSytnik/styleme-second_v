@@ -11,15 +11,14 @@ import styles from './app-header.module.css';
 
 /**
  * Top header — visible on every screen.
- * Shows brand, current quota balance, "Watch ad" affordance, theme switcher.
  *
- * Day 4 (ADR-007): "Watch ad" button visible-but-disabled with a "Soon" badge.
- * The button makes NO network call — clicking does nothing, avoiding the 501
- * that /api/billing/grant-reward returns in prod. Real AdSense integration
- * lands in Day 6.
+ * Day 5 (ADR-008): + History button. Opens the history screen from anywhere.
+ * Hidden when user is on history-detail (back button is used instead).
  */
 export function AppHeader(): React.ReactElement {
   const reset = useAppStore((s) => s.reset);
+  const screen = useAppStore((s) => s.screen);
+  const setScreen = useAppStore((s) => s.setScreen);
   const { isReady } = useAuth();
 
   const balance = useQuery({
@@ -28,6 +27,8 @@ export function AppHeader(): React.ReactElement {
     enabled: isReady,
     staleTime: 30_000,
   });
+
+  const showHistoryButton = screen !== 'history' && screen !== 'history-detail';
 
   return (
     <header className={styles.header}>
@@ -59,7 +60,19 @@ export function AppHeader(): React.ReactElement {
           </div>
         )}
 
-        {/* Day 4: Watch ad Coming Soon — visible affordance, no network call. */}
+        {showHistoryButton && (
+          <button
+            type="button"
+            className={styles.historyButton}
+            onClick={() => setScreen('history')}
+            aria-label="Open history"
+          >
+            <span aria-hidden="true">🕘</span>
+            <span className={styles.historyLabel}>History</span>
+          </button>
+        )}
+
+        {/* Watch ad Coming Soon */}
         <button
           type="button"
           className={styles.watchAd}
