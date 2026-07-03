@@ -57,15 +57,17 @@ export interface BillingBalance {
 }
 
 /**
- * A single generation record.
- *
- * Day 5 (ADR-008): `mode`, `customPrompt`, `deletedAt` added.
- * - `mode` is authoritative for reconstructing the original pipeline
- *   (regenerate flow, analytics, future filters).
- * - `customPrompt` is populated only when mode === 'custom'.
- * - `deletedAt` is set on soft-delete; the API filters these out of
- *   list results so the client never sees them.
+ * Day 6 (ADR-009): issued by POST /api/billing/ad-session.
+ * The client must show the ad, wait at least `minWatchSeconds`,
+ * then claim via POST /api/billing/grant-reward { nonce }.
  */
+export interface AdSession {
+  nonce: string;
+  minWatchSeconds: number;
+  /** How many rewarded views the user has left today (after this one). */
+  viewsRemainingToday: number;
+}
+
 export type GenerationMode = 'preset' | 'custom' | 'reference';
 
 export interface Generation {
@@ -79,17 +81,9 @@ export interface Generation {
   resultUrl: string;
   costCents: number;
   createdAt: string;
-  /** Server never returns rows with deletedAt !== null, but kept in the
-   *  type for tests, admin tooling, and forward compat. */
   deletedAt: string | null;
 }
 
-/**
- * One page of the paginated /api/generations feed.
- *
- * Cursor is opaque to the client — treat as a bearer token, pass it back
- * verbatim to fetch the next page. `null` means no more pages.
- */
 export interface GenerationListPage {
   items: Generation[];
   nextCursor: string | null;

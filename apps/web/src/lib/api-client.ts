@@ -5,10 +5,11 @@
  * - System endpoints (`/health`) return a plain object.
  * - Bearer token (Supabase JWT) attached automatically when available.
  *
- * Day 5: + listGenerations (cursor pagination) + deleteGeneration.
+ * Day 6: + startAdSession; grantReward now claims a server-issued nonce.
  */
 
 import type {
+  AdSession,
   ApiResponse,
   BillingBalance,
   ErrorCode,
@@ -106,11 +107,21 @@ export const api = {
 
   getBalance: () => request<BillingBalance>('/api/billing/balance'),
 
-  grantReward: (token = 'dev-token') =>
+  // ==========================================================================
+  // Day 6 — rewarded ads
+  // ==========================================================================
+
+  /** Mint a rewarded-ad session nonce. Throws AD_CAP_REACHED at daily cap. */
+  startAdSession: () =>
+    request<AdSession>('/api/billing/ad-session', { method: 'POST' }),
+
+  /** Claim a completed session. Server verifies user-binding, min watch
+   *  time, daily cap, and burns the nonce atomically. */
+  grantReward: (nonce: string) =>
     request<BillingBalance>('/api/billing/grant-reward', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ nonce }),
     }),
 
   transformByStyleId: (image: Blob, styleId: number) => {
@@ -134,15 +145,6 @@ export const api = {
     return request<TransformResult>('/api/transform/reference', { method: 'POST', body: fd });
   },
 
-  // ==========================================================================
-  // Day 5 — Generations history
-  // ==========================================================================
-
-  /**
-   * Cursor-paginated list of the user's generations.
-   * @param cursor opaque token returned by the previous page (or undefined for the first)
-   * @param limit  1..50, default 20
-   */
   listGenerations: (opts: { cursor?: string; limit?: number } = {}) => {
     const params = new URLSearchParams();
     if (opts.cursor) params.set('cursor', opts.cursor);

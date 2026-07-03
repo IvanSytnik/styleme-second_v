@@ -6,6 +6,9 @@
  * the same minimal interface used by rate-limit and quota services.
  *
  * Production refuses to start without Upstash (enforced in env.ts).
+ *
+ * Day 6 (ADR-009): `del` typed as Promise<number> — its return value is
+ * the arbiter for atomic nonce burn (first claimant gets 1, replays get 0).
  */
 
 import { Redis } from '@upstash/redis';
@@ -19,7 +22,8 @@ interface RedisLike {
   incr(key: string): Promise<number>;
   expire(key: string, seconds: number): Promise<unknown>;
   ttl(key: string): Promise<number>;
-  del(key: string): Promise<unknown>;
+  /** Returns the number of keys removed (0 or 1 for a single key). */
+  del(key: string): Promise<number>;
 }
 
 class InMemoryRedis implements RedisLike {
@@ -70,6 +74,7 @@ class InMemoryRedis implements RedisLike {
   }
 
   async del(key: string): Promise<number> {
+    this.cleanup(key);
     return this.store.delete(key) ? 1 : 0;
   }
 }

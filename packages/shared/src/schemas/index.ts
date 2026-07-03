@@ -13,10 +13,6 @@ export const transformByStyleIdSchema = z.object({
   styleId: z.coerce.number().int().min(1).max(40),
 });
 
-/**
- * Day 4 (ADR-007): bounds updated to [MIN_CUSTOM_PROMPT_LENGTH, MAX_CUSTOM_PROMPT_LENGTH].
- * `trim()` runs before `min` so whitespace padding cannot bypass the MIN bound.
- */
 export const transformCustomSchema = z.object({
   hairstyle: z
     .string()
@@ -31,23 +27,15 @@ export const transformCustomSchema = z.object({
     ),
 });
 
+/**
+ * Day 6 (ADR-009): grant-reward is claimed with a server-issued nonce,
+ * not an ad-network token. The nonce was issued by POST /api/billing/ad-session
+ * and is bound to the requesting user + a minimum-watch timer.
+ */
 export const grantRewardSchema = z.object({
-  /**
-   * Ad-network token. In production this must be verified against the
-   * ad-network's signature. In development the dev-only endpoint accepts
-   * any non-empty string for smoke testing.
-   */
-  token: z.string().min(1),
+  nonce: z.string().uuid('Invalid ad session'),
 });
 
-/**
- * Day 5 (ADR-008): pagination for GET /api/generations.
- *
- * `cursor` is a base64-encoded (createdAt, id) tuple issued by the server.
- * Clients pass it back verbatim; we don't validate its shape here beyond
- * "string, sanity-limited length" because malformed cursors just yield
- * an empty page rather than throwing.
- */
 export const listGenerationsQuerySchema = z.object({
   cursor: z.string().max(256).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),

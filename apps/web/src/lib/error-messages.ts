@@ -71,6 +71,19 @@ const MAP: Record<string, Omit<DisplayableError, 'body'> & { body?: string }> = 
     retryable: false,
     needsCredits: false,
   },
+  /** Day 6 (ADR-009) */
+  AD_SESSION_INVALID: {
+    title: 'Ad session expired',
+    body: 'The ad session is invalid or expired. Please watch the ad again.',
+    retryable: true,
+    needsCredits: false,
+  },
+  AD_CAP_REACHED: {
+    title: 'Daily ad limit reached',
+    body: 'You\'ve watched the maximum number of ads for today. Come back tomorrow for more!',
+    retryable: false,
+    needsCredits: false,
+  },
 };
 
 export function describeError(err: unknown): DisplayableError {

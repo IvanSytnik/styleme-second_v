@@ -1,71 +1,53 @@
-# 🚀 START_HERE — Day 5
+# 🚀 START_HERE — Day 6
 
-> **What's inside:** Generation history + soft delete + Regenerate.
-> **Compatible with:** clean Day 4 repo (post-Day-4-merge + hotfix-429).
+> **What's inside:** Rewarded ads — live Watch-ad button, nonce-protected
+> grant endpoint, dev ad provider, GPT skeleton.
+> **Compatible with:** clean Day 5 repo (post-merge).
 
 ---
 
 ## 📦 What changes
 
-Extract on top of your repo root. This pack is replacement + additive; the
-Day 3 file layout and `page.tsx` import surface are preserved.
-
 ### Modified files (replace existing)
 
 ```
 packages/shared/
-├── package.json                                    ← bump 0.3.0 → 0.4.0
+├── package.json                            ← bump 0.4.0 → 0.5.0
 └── src/
-    ├── types/api.ts                                ← + Generation.mode/customPrompt/deletedAt + GenerationListPage
-    └── schemas/index.ts                            ← + listGenerationsQuerySchema
+    ├── constants/limits.ts                 ← + AD_REWARDS + AD_* error codes
+    ├── schemas/index.ts                    ← grantRewardSchema: token → nonce
+    └── types/api.ts                        ← + AdSession
 
 apps/api/src/
-├── server.ts                                       ← mount generationsRouter + CORS DELETE
-├── db/generations.ts                               ← insert(mode/customPrompt) + listGenerations + softDeleteGeneration
-└── routes/transform.ts                             ← pass mode/customPrompt to insertGeneration
+├── lib/redis.ts                            ← del typed Promise<number> (burn arbiter)
+└── routes/billing.ts                       ← + ad-session endpoint, nonce-verified grant (prod-enabled)
 
 apps/web/src/
-├── app/
-│   ├── page.tsx                                    ← route history / history-detail
-│   └── _components/
-│       ├── app-header.tsx                          ← History button
-│       └── app-header.module.css
-├── lib/
-│   ├── app-store.ts                                ← + history screens + detailGenerationId
-│   └── api-client.ts                               ← listGenerations + deleteGeneration
-└── features/processing/components/
-    └── processing-screen.tsx                        ← invalidate generations on success
+├── app/_components/app-header.tsx          ← WatchAdButton component
+├── lib/env.ts                              ← + NEXT_PUBLIC_AD_PROVIDER
+├── lib/api-client.ts                       ← + startAdSession, grantReward(nonce)
+└── lib/error-messages.ts                   ← + AD_SESSION_INVALID, AD_CAP_REACHED
 ```
 
-### New files (create)
+### New files
 
 ```
-supabase/migrations/
-└── 20260702000000_history_and_soft_delete.sql
+apps/api/src/lib/ad-session.ts              ← nonce lifecycle (issue/claim/burn)
 
-apps/web/src/features/history/
-├── api/
-│   ├── use-generations.ts                          ← useInfiniteQuery
-│   └── use-delete-generation.ts                    ← optimistic delete
-├── lib/
-│   ├── regenerate.ts                               ← useRegenerate() helper
-│   └── relative-time.ts                            ← Intl.RelativeTimeFormat wrapper
-└── components/
-    ├── history-screen.tsx
-    ├── history-screen.module.css
-    ├── history-card.tsx
-    ├── history-card.module.css
-    ├── history-detail-screen.tsx
-    └── history-detail-screen.module.css
+apps/web/src/features/rewards/
+├── api/use-ad-reward.ts                    ← session → watch → claim orchestration
+├── components/
+│   ├── watch-ad-button.tsx                 ← provider-aware live button
+│   ├── watch-ad-button.module.css
+│   ├── dev-ad-modal.tsx                    ← 15s countdown fake ad
+│   └── dev-ad-modal.module.css
+└── lib/gpt-provider.ts                     ← GPT skeleton with TODO
 
-docs/adr/
-└── 008-history-and-soft-delete.md
+docs/adr/009-rewarded-ads.md
 ```
 
 ### Untouched
-
-Backend: middleware, lib/*, other routes.
-Frontend: catalog/, upload/, result/, theme/, all providers.
+transform routes, quota.ts internals, history feature, catalog, all providers.
 
 ---
 
@@ -73,99 +55,69 @@ Frontend: catalog/, upload/, result/, theme/, all providers.
 
 ```bash
 cd ~/Downloads/styleme-second_v
-
-# 1. New feature branch
 git checkout main && git pull
-git checkout -b day-5/history
+git checkout -b day-6/rewarded-ads
 
-# 2. Extract
-unzip -o ~/Downloads/styleme-v3-day5.zip -d .
+unzip -o ~/Downloads/styleme-v3-day6.zip -d .
 
-# 3. Install (no new deps)
-npm install
-
-# 4. Rebuild shared (new types)
-npm run build:shared
-
-# 5. Apply the migration
-#    Option A — Supabase Dashboard → SQL Editor → paste contents of
-#    supabase/migrations/20260702000000_history_and_soft_delete.sql → Run
-#
-#    Option B — psql / supabase CLI if you have it wired up
+npm install          # no new deps — sanity only
+npm run build:shared # new constants/types/schemas
 ```
 
-**Migration is idempotent** — safe to run multiple times. Verify in the
-SQL editor:
+No DB migration this time — everything lives in Redis.
 
-```sql
-select column_name, data_type, is_nullable
-from information_schema.columns
-where table_schema = 'public' and table_name = 'generations'
-order by ordinal_position;
-```
-
-You should see `mode`, `custom_prompt`, `deleted_at`.
+**env:** nothing to add for dev (`NEXT_PUBLIC_AD_PROVIDER` defaults to `dev`).
+For production remember: set `NEXT_PUBLIC_AD_PROVIDER=off` on Vercel until
+GPT is approved.
 
 ---
 
 ## ✅ E2E smoke checklist
 
-Two terminals as usual (`npm run dev:api`, `npm run dev:web`).
+Terminals as usual (`dev:api` + `dev:web`), hard refresh.
 
-1. **Header** — new **🕘 History** button appears next to Watch ad.
+1. **Button is live.** Header shows **🎬 Watch ad +1** (accent-coloured,
+   clickable) instead of the grey "Soon" chip.
 
-2. **Empty state.** Fresh account → History → "No generations yet" with
-   Try-your-first-hairstyle CTA. Click → goes to Upload.
+2. **Happy path.** Click → dev-ad modal appears (DEV AD badge, fake video,
+   progress bar). Wait 15 s → "Reward unlocked!" → **Claim +1 credit 🎉**
+   → toast "+1 credit earned!" → header Bonus counter shows +1.
 
-3. **Populate.** Do 1 preset + 1 custom + 1 reference generation.
+3. **Early dismiss.** Click Watch ad → immediately press **Close (no reward)**
+   (or Escape) → modal closes, **no credit granted**, no error.
 
-4. **History grid.** Open History → 3 cards, most-recent first. Result
-   image, name, "just now" / "2 minutes ago".
+4. **Server enforces the timer** (the real test). In DevTools Console:
+   ```js
+   const r1 = await fetch('http://localhost:3001/api/billing/ad-session', {
+     method: 'POST',
+     headers: { Authorization: 'Bearer ' + (await window.__getToken?.() ?? prompt('paste token')) },
+   }).then(r => r.json());
+   // Claim IMMEDIATELY — before 15 s:
+   const r2 = await fetch('http://localhost:3001/api/billing/grant-reward', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + prompt('same token') },
+     body: JSON.stringify({ nonce: r1.data.nonce }),
+   }).then(r => r.json());
+   console.log(r2); // → success:false, code:AD_SESSION_INVALID ("watch the full ad")
+   ```
+   (Проще: возьми Bearer из любого запроса в Network tab.)
 
-5. **Custom label.** The custom card shows the prompt text (truncated),
-   not "Custom style".
+5. **Replay is dead.** Complete one honest view (step 2), then re-claim the
+   same nonce via console → `AD_SESSION_INVALID`.
 
-6. **Detail.** Click any card → full-screen detail with mode badge,
-   date, big image, 3 actions + Delete.
+6. **Daily cap.** Watch 10 ads (или временно поставь `MAX_VIEWS_PER_DAY: 2`
+   в shared + `npm run build:shared` + restart api). 11-й (3-й) клик по
+   Watch ad → toast "Daily ad limit reached…", модалка не открывается.
 
-7. **Regenerate.** Click Regenerate on a preset card → toast "Upload a
-   photo to try …" → Upload screen appears with your selected style
-   already in the store. Upload → catalog is pre-selected → Generate.
+7. **Reward actually spends.** Set free quota exhausted (3 generations),
+   earn +1 via ad, generate → works, Bonus decrements.
 
-8. **Download.** Downloads a `styleme-<name>.jpg` file.
-
-9. **Share.** On mobile → native share sheet. Desktop → toast "Link
-   copied".
-
-10. **Delete.**
-    - Tap Delete → button becomes red "Tap again to confirm delete" + Cancel appears.
-    - Tap Cancel → back to normal.
-    - Tap Delete twice → row disappears instantly (optimistic), toast
-      "Generation deleted", you land back on History with one fewer card.
-    - Refresh page → the deleted row stays gone (soft-delete persisted).
-
-11. **Infinite scroll.** If you have 20+ generations, scrolling near the
-    bottom loads the next page automatically. "Loading more…" briefly.
-    When you reach the end → "You've seen everything."
-
-12. **DB check.**
-    ```sql
-    select id, mode, style_name, custom_prompt, deleted_at, created_at
-    from public.generations
-    order by created_at desc
-    limit 10;
-    ```
-    - `mode` present on all new rows
-    - `custom_prompt` only for `mode='custom'`
-    - `deleted_at` for the row you deleted
-
-13. **Build.**
-    ```bash
-    npm run build:shared
-    (cd apps/web && npm run build)
-    (cd apps/api && npm run build)
-    ```
-    Zero warnings/errors.
+8. **Builds.**
+   ```bash
+   npm run build:shared
+   (cd apps/web && npm run build)
+   (cd apps/api && npm run build)
+   ```
 
 ---
 
@@ -173,47 +125,50 @@ Two terminals as usual (`npm run dev:api`, `npm run dev:web`).
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| History screen 500s | Migration not applied | Run the SQL from supabase/migrations/ |
-| `custom_prompt` column not found | Same as above | Run the migration |
-| Delete button no-op | Not authenticated | Refresh page (Supabase session might be stale) |
-| Cards missing / grid empty despite generations existing | Cache staleness | History screen focuses → refetch triggers; if not, hard refresh |
-| CORS error on DELETE | Server not restarted after changes | Restart `dev:api` |
-| `Module not found: '@styleme/shared'` | Forgot `npm run build:shared` | Rebuild |
-| Migration fails on `alter column mode set not null` | Old rows with NULL mode existed but backfill was skipped | Re-run migration — it's idempotent |
+| Button still shows "Soon" | `NEXT_PUBLIC_AD_PROVIDER=off` in .env.local | Remove the var or set `dev`; restart dev:web |
+| `AD_SESSION_INVALID` on honest claim | api using stale shared build | `npm run build:shared` + restart api |
+| Claim succeeds instantly (no 15s check) | Old billing.ts still in place | Verify unzip replaced apps/api/src/routes/billing.ts |
+| Modal never unlocks | System clock skew between issue and claim | Check machine time; TTL math is server-side epoch ms |
+| Cap never triggers | Redis in-memory fallback resets on api restart | Expected in dev without Upstash creds |
 
 ---
 
-## 📝 Update memory after successful smoke
+## 📝 Memory updates after smoke
 
-`PROJECT_MEMORY.md`:
-- Move Day 5 from `In Progress` → `Completed`
-- Under **Architecture Decisions** add:
-  `- ADR-008 — Day 5 (history + soft delete + regenerate)`
-- Bump `@styleme/shared` note to v0.4.0
+`PROJECT_MEMORY.md`: Day 6 → Completed; add
+`- ADR-009 — Day 6 (rewarded ads: nonce contour, provider abstraction)`;
+shared → v0.5.0.
+
+**Important for prod runbook (Day 9):** `NEXT_PUBLIC_AD_PROVIDER=off` on
+Vercel until Ad Manager approval, then `gpt`.
 
 ---
 
-## 🚦 Ready for Day 6?
-
-When smoke is green → merge to main → ready for Day 6 (AdSense rewarded video).
+## 🚦 Commit + merge
 
 ```bash
 git add -A
-git commit -m "feat(day-5): history + soft delete + regenerate
+git diff --cached | grep -iE "(SUPABASE_SERVICE_ROLE|REPLICATE_API_TOKEN|UPSTASH_REDIS_REST_TOKEN|eyJ[A-Za-z0-9_-]{20,})" | head -5
+# пусто → коммитим
 
-- schema: mode enum, custom_prompt, deleted_at + partial index + DELETE RLS
-- api: /api/generations GET (cursor paginated) + DELETE
-- transform: record mode + customPrompt on insert
-- web: features/history/ with useInfiniteQuery + optimistic delete
-- header: History button
-- store: history + history-detail screens
+git commit -m "feat(day-6): rewarded ads — nonce contour + provider abstraction
 
-Ref: docs/adr/008-history-and-soft-delete.md"
+- shared 0.5.0: AD_REWARDS params, AD_* error codes, AdSession type,
+  grantRewardSchema token→nonce
+- api: lib/ad-session.ts (issue/claim, user-bound nonce, min-watch-time,
+  daily cap, atomic burn via DEL return value); billing grant-reward
+  prod-enabled (nonce contour replaces the 501 gate)
+- web: features/rewards/ — WatchAdButton (dev|gpt|off providers),
+  DevAdModal 15s countdown, GPT skeleton with TODO
+- SSV clarification: web has no signed callbacks (AdMob-only mechanism);
+  documented in ADR-009
 
-git push -u origin day-5/history
-git checkout main
-git merge day-5/history
-git push
-git branch -d day-5/history
-git push origin --delete day-5/history
+Ref: docs/adr/009-rewarded-ads.md"
+
+git push -u origin day-6/rewarded-ads
+git checkout main && git merge day-6/rewarded-ads && git push
+git branch -d day-6/rewarded-ads
+git push origin --delete day-6/rewarded-ads
 ```
+
+Then → **Day 7: i18n (en/de/uk/ru)**.

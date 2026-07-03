@@ -6,14 +6,16 @@ import { api } from '@/lib/api-client';
 import { useAppStore } from '@/lib/app-store';
 import { useAuth } from '@/lib/auth-provider';
 import { ThemeSwitcher } from '@/features/theme/components/theme-switcher';
+import { WatchAdButton } from '@/features/rewards/components/watch-ad-button';
 
 import styles from './app-header.module.css';
 
 /**
  * Top header — visible on every screen.
  *
- * Day 5 (ADR-008): + History button. Opens the history screen from anywhere.
- * Hidden when user is on history-detail (back button is used instead).
+ * Day 6 (ADR-009): the Watch-ad button is now live (provider-driven).
+ * See features/rewards/. When NEXT_PUBLIC_AD_PROVIDER=off it renders
+ * the Day 4 "Coming soon" state.
  */
 export function AppHeader(): React.ReactElement {
   const reset = useAppStore((s) => s.reset);
@@ -72,18 +74,7 @@ export function AppHeader(): React.ReactElement {
           </button>
         )}
 
-        {/* Watch ad Coming Soon */}
-        <button
-          type="button"
-          className={styles.watchAd}
-          disabled
-          title="Coming soon — watch ads to earn extra generations"
-          aria-label="Watch ad for credit — coming soon"
-        >
-          <span aria-hidden="true">🎬</span>
-          <span className={styles.watchAdLabel}>Watch ad</span>
-          <span className={styles.comingSoon}>Soon</span>
-        </button>
+        <WatchAdButton />
 
         <ThemeSwitcher />
       </div>

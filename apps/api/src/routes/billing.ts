@@ -1,13 +1,14 @@
 /**
  * Billing routes.
  *
- *  GET  /api/billing/balance     — current quota snapshot
- *  POST /api/billing/grant-reward — grant +1 rewarded credit
+ *  GET  /api/billing/balance      — current quota snapshot
+ *  POST /api/billing/ad-session   — mint a rewarded-ad nonce (Day 6)
+ *  POST /api/billing/grant-reward — claim the nonce → +1 rewarded credit
  *
- * The grant endpoint is the critical security point: in production it
- * MUST verify the ad-network signature before granting. Right now we
- * accept any non-empty token in development, and return 501 in
- * production — so it cannot be abused before Day 6 lands real verification.
+ * Day 6 (ADR-009): grant-reward is now protected by the server-issued
+ * nonce lifecycle (user-bound, min-watch-time, daily cap, atomic burn)
+ * and therefore WORKS IN PRODUCTION. The old 501 gate is removed —
+ * the nonce contour IS the protection. See lib/ad-session.ts.
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express';
@@ -15,12 +16,14 @@ import { Router, type Request, type Response, type NextFunction } from 'express'
 import {
   ERROR_CODES,
   grantRewardSchema,
+  type AdSession,
   type ApiResponse,
   type BillingBalance,
 } from '@styleme/shared';
 
-import { isProd } from '../env';
+import { claimAdSession, issueAdSession } from '../lib/ad-session';
 import { getBalance, grantRewarded } from '../lib/quota';
+import { HttpError } from '../middleware/error-handler';
 import { requireAuth } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 
@@ -39,24 +42,74 @@ billingRouter.get(
   },
 );
 
+// ============================================================================
+// POST /api/billing/ad-session — start a rewarded-ad session
+// ============================================================================
+
+billingRouter.post(
+  '/api/billing/ad-session',
+  requireAuth,
+  async (req: Request, res: Response<ApiResponse<AdSession>>, next: NextFunction) => {
+    try {
+      const result = await issueAdSession(req.user!.id);
+      if (!result.ok) {
+        throw new HttpError(
+          429,
+          ERROR_CODES.AD_CAP_REACHED,
+          "You've reached today's ad limit. Come back tomorrow!",
+        );
+      }
+      res.json({
+        success: true,
+        data: {
+          nonce: result.nonce,
+          minWatchSeconds: result.minWatchSeconds,
+          viewsRemainingToday: result.viewsRemainingToday,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ============================================================================
+// POST /api/billing/grant-reward — claim a completed session
+// ============================================================================
+
 billingRouter.post(
   '/api/billing/grant-reward',
   requireAuth,
   validate(grantRewardSchema),
   async (req: Request, res: Response<ApiResponse<BillingBalance>>, next: NextFunction) => {
     try {
-      if (isProd) {
-        // Day 6 will implement real signature verification here.
-        res.status(501).json({
-          success: false,
-          error: {
-            code: ERROR_CODES.NOT_IMPLEMENTED,
-            message: 'Ad-network verification is not yet enabled in production',
-          },
-        });
-        return;
+      const { nonce } = req.body as { nonce: string };
+      const claim = await claimAdSession(req.user!.id, nonce);
+
+      if (!claim.ok) {
+        switch (claim.reason) {
+          case 'cap':
+            throw new HttpError(
+              429,
+              ERROR_CODES.AD_CAP_REACHED,
+              "You've reached today's ad limit. Come back tomorrow!",
+            );
+          case 'too-early':
+            throw new HttpError(
+              400,
+              ERROR_CODES.AD_SESSION_INVALID,
+              'Please watch the full ad before claiming.',
+            );
+          case 'invalid':
+          default:
+            throw new HttpError(
+              400,
+              ERROR_CODES.AD_SESSION_INVALID,
+              'Ad session is invalid or expired. Please try again.',
+            );
+        }
       }
-      // Dev-only: any non-empty token grants +1. Schema already enforced non-empty.
+
       const balance = await grantRewarded(req.user!.id, 1);
       res.json({ success: true, data: balance });
     } catch (err) {
