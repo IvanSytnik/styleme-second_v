@@ -1,174 +1,163 @@
-# 🚀 START_HERE — Day 6
+# START_HERE — Day 7 (i18n + доменные швы 2–3) — ПОЛНЫЙ ПАК
 
-> **What's inside:** Rewarded ads — live Watch-ad button, nonce-protected
-> grant endpoint, dev ad provider, GPT skeleton.
-> **Compatible with:** clean Day 5 repo (post-merge).
+> Wave 1 + Wave 2 + hotfix (middleware→proxy) объединены. Все известные
+> user-facing строки покрыты. Оставшиеся английские строки — 3
+> задокументированных residual gap'а в
+> `docs/adr/010-i18n-catalog-data-model.md` (низкий риск, не блокируют
+> мёрдж).
 
----
-
-## 📦 What changes
-
-### Modified files (replace existing)
-
-```
-packages/shared/
-├── package.json                            ← bump 0.4.0 → 0.5.0
-└── src/
-    ├── constants/limits.ts                 ← + AD_REWARDS + AD_* error codes
-    ├── schemas/index.ts                    ← grantRewardSchema: token → nonce
-    └── types/api.ts                        ← + AdSession
-
-apps/api/src/
-├── lib/redis.ts                            ← del typed Promise<number> (burn arbiter)
-└── routes/billing.ts                       ← + ad-session endpoint, nonce-verified grant (prod-enabled)
-
-apps/web/src/
-├── app/_components/app-header.tsx          ← WatchAdButton component
-├── lib/env.ts                              ← + NEXT_PUBLIC_AD_PROVIDER
-├── lib/api-client.ts                       ← + startAdSession, grantReward(nonce)
-└── lib/error-messages.ts                   ← + AD_SESSION_INVALID, AD_CAP_REACHED
-```
-
-### New files
-
-```
-apps/api/src/lib/ad-session.ts              ← nonce lifecycle (issue/claim/burn)
-
-apps/web/src/features/rewards/
-├── api/use-ad-reward.ts                    ← session → watch → claim orchestration
-├── components/
-│   ├── watch-ad-button.tsx                 ← provider-aware live button
-│   ├── watch-ad-button.module.css
-│   ├── dev-ad-modal.tsx                    ← 15s countdown fake ad
-│   └── dev-ad-modal.module.css
-└── lib/gpt-provider.ts                     ← GPT skeleton with TODO
-
-docs/adr/009-rewarded-ads.md
-```
-
-### Untouched
-transform routes, quota.ts internals, history feature, catalog, all providers.
-
----
-
-## ⚙️ Install
+## ⚡ Если у тебя уже стоит предыдущий пак (Wave 1/2)
 
 ```bash
-cd ~/Downloads/styleme-second_v
-git checkout main && git pull
-git checkout -b day-6/rewarded-ads
-
-unzip -o ~/Downloads/styleme-v3-day6.zip -d .
-
-npm install          # no new deps — sanity only
-npm run build:shared # new constants/types/schemas
+rm apps/web/src/middleware.ts
 ```
+Скопировать новый `apps/web/src/proxy.ts` — см. секцию 2. Причина:
+Next.js 16 переименовал `middleware.ts` → `proxy.ts` (тот же функционал,
+другое имя файла); старый файл будет молча проигнорирован в будущей
+версии Next без ошибки сборки. Подробности — ADR-010, "Post-delivery
+hotfix".
 
-No DB migration this time — everything lives in Redis.
 
-**env:** nothing to add for dev (`NEXT_PUBLIC_AD_PROVIDER` defaults to `dev`).
-For production remember: set `NEXT_PUBLIC_AD_PROVIDER=off` on Vercel until
-GPT is approved.
 
----
-
-## ✅ E2E smoke checklist
-
-Terminals as usual (`dev:api` + `dev:web`), hard refresh.
-
-1. **Button is live.** Header shows **🎬 Watch ad +1** (accent-coloured,
-   clickable) instead of the grey "Soon" chip.
-
-2. **Happy path.** Click → dev-ad modal appears (DEV AD badge, fake video,
-   progress bar). Wait 15 s → "Reward unlocked!" → **Claim +1 credit 🎉**
-   → toast "+1 credit earned!" → header Bonus counter shows +1.
-
-3. **Early dismiss.** Click Watch ad → immediately press **Close (no reward)**
-   (or Escape) → modal closes, **no credit granted**, no error.
-
-4. **Server enforces the timer** (the real test). In DevTools Console:
-   ```js
-   const r1 = await fetch('http://localhost:3001/api/billing/ad-session', {
-     method: 'POST',
-     headers: { Authorization: 'Bearer ' + (await window.__getToken?.() ?? prompt('paste token')) },
-   }).then(r => r.json());
-   // Claim IMMEDIATELY — before 15 s:
-   const r2 = await fetch('http://localhost:3001/api/billing/grant-reward', {
-     method: 'POST',
-     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + prompt('same token') },
-     body: JSON.stringify({ nonce: r1.data.nonce }),
-   }).then(r => r.json());
-   console.log(r2); // → success:false, code:AD_SESSION_INVALID ("watch the full ad")
-   ```
-   (Проще: возьми Bearer из любого запроса в Network tab.)
-
-5. **Replay is dead.** Complete one honest view (step 2), then re-claim the
-   same nonce via console → `AD_SESSION_INVALID`.
-
-6. **Daily cap.** Watch 10 ads (или временно поставь `MAX_VIEWS_PER_DAY: 2`
-   в shared + `npm run build:shared` + restart api). 11-й (3-й) клик по
-   Watch ad → toast "Daily ad limit reached…", модалка не открывается.
-
-7. **Reward actually spends.** Set free quota exhausted (3 generations),
-   earn +1 via ad, generate → works, Bonus decrements.
-
-8. **Builds.**
-   ```bash
-   npm run build:shared
-   (cd apps/web && npm run build)
-   (cd apps/api && npm run build)
-   ```
-
----
-
-## 🐛 If something breaks
-
-| Symptom | Cause | Fix |
-|---|---|---|
-| Button still shows "Soon" | `NEXT_PUBLIC_AD_PROVIDER=off` in .env.local | Remove the var or set `dev`; restart dev:web |
-| `AD_SESSION_INVALID` on honest claim | api using stale shared build | `npm run build:shared` + restart api |
-| Claim succeeds instantly (no 15s check) | Old billing.ts still in place | Verify unzip replaced apps/api/src/routes/billing.ts |
-| Modal never unlocks | System clock skew between issue and claim | Check machine time; TTL math is server-side epoch ms |
-| Cap never triggers | Redis in-memory fallback resets on api restart | Expected in dev without Upstash creds |
-
----
-
-## 📝 Memory updates after smoke
-
-`PROJECT_MEMORY.md`: Day 6 → Completed; add
-`- ADR-009 — Day 6 (rewarded ads: nonce contour, provider abstraction)`;
-shared → v0.5.0.
-
-**Important for prod runbook (Day 9):** `NEXT_PUBLIC_AD_PROVIDER=off` on
-Vercel until Ad Manager approval, then `gpt`.
-
----
-
-## 🚦 Commit + merge
+## 1. Установка зависимости
 
 ```bash
-git add -A
-git diff --cached | grep -iE "(SUPABASE_SERVICE_ROLE|REPLICATE_API_TOKEN|UPSTASH_REDIS_REST_TOKEN|eyJ[A-Za-z0-9_-]{20,})" | head -5
-# пусто → коммитим
-
-git commit -m "feat(day-6): rewarded ads — nonce contour + provider abstraction
-
-- shared 0.5.0: AD_REWARDS params, AD_* error codes, AdSession type,
-  grantRewardSchema token→nonce
-- api: lib/ad-session.ts (issue/claim, user-bound nonce, min-watch-time,
-  daily cap, atomic burn via DEL return value); billing grant-reward
-  prod-enabled (nonce contour replaces the 501 gate)
-- web: features/rewards/ — WatchAdButton (dev|gpt|off providers),
-  DevAdModal 15s countdown, GPT skeleton with TODO
-- SSV clarification: web has no signed callbacks (AdMob-only mechanism);
-  documented in ADR-009
-
-Ref: docs/adr/009-rewarded-ads.md"
-
-git push -u origin day-6/rewarded-ads
-git checkout main && git merge day-6/rewarded-ads && git push
-git branch -d day-6/rewarded-ads
-git push origin --delete day-6/rewarded-ads
+cd apps/web
+npm install next-intl
 ```
 
-Then → **Day 7: i18n (en/de/uk/ru)**.
+## 2. Новые файлы (просто скопировать)
+
+```
+apps/web/src/proxy.ts
+apps/web/src/i18n/routing.ts
+apps/web/src/i18n/request.ts
+apps/web/src/messages/en.json
+apps/web/src/messages/de.json
+apps/web/src/messages/uk.json
+apps/web/src/messages/ru.json
+apps/web/src/app/[locale]/layout.tsx
+apps/web/src/app/[locale]/page.tsx
+apps/web/src/features/catalog/lib/use-style-display-name.ts
+apps/web/src/features/theme/components/language-switcher.tsx
+apps/web/src/features/theme/components/language-switcher.module.css
+docs/adr/010-i18n-catalog-data-model.md
+```
+
+## 3. Заменяемые файлы (перезаписать целиком)
+
+```
+packages/shared/src/hairstyles/ui.ts
+packages/shared/src/hairstyles/prompts.ts
+packages/shared/src/types/api.ts
+apps/api/src/routes/transform.ts
+apps/web/next.config.ts
+apps/web/src/lib/app-store.ts
+apps/web/src/lib/error-messages.ts
+apps/web/src/features/history/lib/relative-time.ts
+apps/web/src/app/_components/app-header.tsx
+apps/web/src/features/catalog/components/catalog-screen.tsx
+apps/web/src/features/catalog/components/gallery-view.tsx
+apps/web/src/features/catalog/components/mode-selector.tsx
+apps/web/src/features/catalog/components/custom-prompt-view.tsx
+apps/web/src/features/catalog/components/reference-photo-view.tsx
+apps/web/src/features/processing/components/processing-screen.tsx
+apps/web/src/features/result/components/result-screen.tsx
+apps/web/src/features/rewards/components/watch-ad-button.tsx
+apps/web/src/features/rewards/components/dev-ad-modal.tsx
+apps/web/src/features/upload/components/upload-screen.tsx
+apps/web/src/features/history/components/history-screen.tsx
+apps/web/src/features/history/components/history-card.tsx
+apps/web/src/features/history/components/history-detail-screen.tsx
+apps/web/src/features/theme/components/theme-switcher.tsx
+apps/web/src/features/theme/theme-provider.tsx
+apps/web/src/features/rewards/api/use-ad-reward.ts
+```
+
+## 4. ОБЯЗАТЕЛЬНО удалить (иначе два конкурирующих route-дерева)
+
+```bash
+rm apps/web/src/app/page.tsx
+rm apps/web/src/app/layout.tsx
+```
+
+`apps/web/src/app/globals.css`, `apps/web/src/app/page.module.css` и
+`apps/web/src/app/_components/` **остаются на месте** — они не
+locale-specific, просто импортируются из нового `[locale]/` с `../`.
+
+## 5. Пересобрать shared
+
+```bash
+npm run build:shared
+```
+
+## 6. Известные breaking changes в сигнатурах (проверить все места использования)
+
+| Было | Стало |
+|---|---|
+| `useAppStore().setResult(url, styleName)` | `setResult(url)` |
+| `useAppStore().resultStyleName` | **удалено** — используй `useStyleDisplayName(...)` |
+| `describeError(err)` | `describeError(err, t)` — `t = useTranslations('errors')` |
+| `relativeTime(iso)` | `relativeTime(iso, locale)` — `locale = useLocale()` |
+| `getPromptById(id)` (shared/hairstyles/prompts) | `getPrompt('hairstyle', id)` (алиас оставлен как deprecated) |
+
+## 7. Важная находка (не пропустить при ревью)
+
+`history-card.tsx` и `history-detail-screen.tsx` раньше показывали
+`Generation.styleName` напрямую пользователю — это была **регрессия
+против ADR-010 D3** (styleName — debug-label, не UI-текст), незаметная
+до просмотра этих файлов. Исправлено переиспользованием
+`useStyleDisplayName`. Проверить при code review отдельно — это баг,
+который не ловится TypeScript (строка есть, тип корректен, просто
+семантически неверно show'ить debug-label).
+
+## 8. E2E smoke checklist (обязательно перед мёрджем)
+
+- [ ] `npm run build:shared && npm run typecheck` — zero errors в web и api
+- [ ] `npm run dev`, зайти на `/`, `/de`, `/uk`, `/ru` — каждый рендерит
+      СВОИ строки (проверка живучести Turbopack-кэша после удаления
+      старых `app/page.tsx`/`layout.tsx`)
+- [ ] `LanguageSwitcher` в хедере — URL меняется, Zustand-экран НЕ
+      сбрасывается
+- [ ] Полный flow: upload → gallery → пресет → generate → subtitle на
+      processing переведён → тот же язык на result
+- [ ] Custom prompt flow — placeholder на текущем языке, текст
+      пользователя НЕ переводится, submit-кнопка переведена
+- [ ] Reference photo flow — intro/hint/submit переведены, generic
+      result label переведён (не литерал `'Reference photo'`)
+- [ ] Upload screen — заголовок/подсказки/privacy-текст переведены на
+      всех 4 языках
+- [ ] **История: открыть History → карточки показывают ПЕРЕВЕДЁННОЕ
+      имя пресета (не английский canonical name), relative time на
+      текущем языке** — это прямая проверка находки из п.7
+- [ ] История-detail: mode badge переведён, share/download/delete на
+      текущем языке, download filename использует переведённое имя
+- [ ] Пустая история / ошибка загрузки истории — переведены
+- [ ] Theme switcher — Light/System/Dark переведены
+- [ ] Сработавшая ошибка (погасить квоту) — заголовок/текст на текущем
+      языке (кроме 3 residual gaps из ADR-010 — это ожидаемо)
+- [ ] Watch-ad dev-modal — все строки на текущем языке
+- [ ] `git diff --cached | grep -iE "(SUPABASE_SERVICE_ROLE|REPLICATE_API_TOKEN|UPSTASH_REDIS_REST_TOKEN|eyJ[A-Za-z0-9_-]{20,})"` — пусто
+
+## 9. Известный технический долг
+
+- `de.json` / `uk.json` — черновой перевод от Claude, не вычитан
+  носителем. Пригодно для demo/dev, требует ревью перед публичным
+  запуском.
+- 3 residual gap'а (Zod-сообщения в `transformCustomSchema`, ошибки
+  `image-resize.ts`, неполное покрытие `ERROR_CODES`) — см.
+  `docs/adr/010-i18n-catalog-data-model.md`, секция "Residual gaps".
+  Рекомендовано закрыть в Day 8 pre-tests cleanup, не блокирует мёрдж.
+- RSC-миграция сознательно не включена (см. ADR-010, Future
+  Improvements) — отдельное решение на будущее.
+
+## Future Improvements (не в скоупе Day 7)
+
+- Рассмотреть частичную миграцию на React Server Components — начиная
+  с `app/[locale]/layout.tsx`, который уже async server component;
+  остальной UI остаётся client-driven (Zustand) до Day 9 URL routing.
+- `getPromptById` deprecated-алиас убрать в Day 8 после
+  `grep -r getPromptById apps/`.
+- Domain seam 1 (`domain` column миграция) — Day 9, как и планировалось.
+- Закрыть 3 residual gap'а (см. выше) до продакшн-релиза.
+
