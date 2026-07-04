@@ -1,10 +1,21 @@
 /**
  * Maps stable API error codes to user-facing messages.
  *
- * These will be replaced with i18n keys in Day 7. For now, English messages
- * with a small set of well-known codes. Unknown codes fall back to the
- * server-provided message.
+ * Day 7 (ADR-010): titles/bodies now come from the i18n dictionary
+ * (`errors.<code>.title` / `errors.<code>.body`) instead of a hardcoded
+ * English map. `retryable` / `needsCredits` are UI *behavior*, not
+ * translatable text, so they stay as a static lookup here — this is the
+ * reason the original design used stable `error.code` rather than
+ * `error.message` in the first place (LESSONS_LEARNED: "stable error
+ * codes, not localized messages").
+ *
+ * `describeError` is a plain function (not a hook) because it's called
+ * from inside a `useMutation` error branch — callers must pass in a
+ * `next-intl` translator scoped to the `errors` namespace, obtained via
+ * `useTranslations('errors')` in the component.
  */
+
+import type { useTranslations } from 'next-intl';
 
 import { ApiClientError } from './api-client';
 
@@ -16,89 +27,42 @@ export interface DisplayableError {
   needsCredits: boolean;
 }
 
-const MAP: Record<string, Omit<DisplayableError, 'body'> & { body?: string }> = {
-  QUOTA_EXCEEDED: {
-    title: 'No credits left',
-    body: 'You\'ve used all your free generations for today. Watch an ad to earn more, or come back tomorrow.',
-    retryable: false,
-    needsCredits: true,
-  },
-  RATE_LIMITED: {
-    title: 'Too fast',
-    body: 'Please wait a moment before trying again.',
-    retryable: true,
-    needsCredits: false,
-  },
-  UPSTREAM_FAILED: {
-    title: 'Generation failed',
-    body: 'The AI service had trouble processing your image. Please try again.',
-    retryable: true,
-    needsCredits: false,
-  },
-  VALIDATION_FAILED: {
-    title: 'Invalid request',
-    body: 'Please check your image and try again.',
-    retryable: false,
-    needsCredits: false,
-  },
-  INVALID_IMAGE: {
-    title: 'Invalid image',
-    body: 'This image cannot be processed. Try a different photo with a clear view of the face.',
-    retryable: false,
-    needsCredits: false,
-  },
-  FILE_TOO_LARGE: {
-    title: 'Image too large',
-    body: 'Please use an image smaller than 10 MB. We\'ll resize it for you.',
-    retryable: false,
-    needsCredits: false,
-  },
-  UNSUPPORTED_MIME: {
-    title: 'Unsupported format',
-    body: 'Please use a JPEG, PNG, or WebP image.',
-    retryable: false,
-    needsCredits: false,
-  },
-  UNAUTHORIZED: {
-    title: 'Session expired',
-    body: 'Please refresh the page to continue.',
-    retryable: false,
-    needsCredits: false,
-  },
-  NOT_IMPLEMENTED: {
-    title: 'Coming soon',
-    body: 'This feature isn\'t available yet.',
-    retryable: false,
-    needsCredits: false,
-  },
-  /** Day 6 (ADR-009) */
-  AD_SESSION_INVALID: {
-    title: 'Ad session expired',
-    body: 'The ad session is invalid or expired. Please watch the ad again.',
-    retryable: true,
-    needsCredits: false,
-  },
-  AD_CAP_REACHED: {
-    title: 'Daily ad limit reached',
-    body: 'You\'ve watched the maximum number of ads for today. Come back tomorrow for more!',
-    retryable: false,
-    needsCredits: false,
-  },
+type ErrorTranslator = ReturnType<typeof useTranslations>;
+
+interface ErrorBehavior {
+  retryable: boolean;
+  needsCredits: boolean;
+}
+
+const BEHAVIOR: Record<string, ErrorBehavior> = {
+  QUOTA_EXCEEDED: { retryable: false, needsCredits: true },
+  RATE_LIMITED: { retryable: true, needsCredits: false },
+  UPSTREAM_FAILED: { retryable: true, needsCredits: false },
+  VALIDATION_FAILED: { retryable: false, needsCredits: false },
+  INVALID_IMAGE: { retryable: false, needsCredits: false },
+  FILE_TOO_LARGE: { retryable: false, needsCredits: false },
+  UNSUPPORTED_MIME: { retryable: false, needsCredits: false },
+  UNAUTHORIZED: { retryable: false, needsCredits: false },
+  NOT_IMPLEMENTED: { retryable: false, needsCredits: false },
+  AD_SESSION_INVALID: { retryable: true, needsCredits: false },
+  AD_CAP_REACHED: { retryable: false, needsCredits: false },
 };
 
-export function describeError(err: unknown): DisplayableError {
+const KNOWN_CODES = new Set(Object.keys(BEHAVIOR));
+
+export function describeError(err: unknown, t: ErrorTranslator): DisplayableError {
   if (err instanceof ApiClientError) {
-    const mapped = MAP[err.code];
-    if (mapped) {
+    if (KNOWN_CODES.has(err.code)) {
+      const behavior = BEHAVIOR[err.code]!;
       return {
-        title: mapped.title,
-        body: mapped.body ?? err.message,
-        retryable: mapped.retryable,
-        needsCredits: mapped.needsCredits,
+        title: t(`${err.code}.title`),
+        body: t(`${err.code}.body`),
+        retryable: behavior.retryable,
+        needsCredits: behavior.needsCredits,
       };
     }
     return {
-      title: 'Something went wrong',
+      title: t('generic.title'),
       body: err.message,
       retryable: true,
       needsCredits: false,
@@ -106,8 +70,8 @@ export function describeError(err: unknown): DisplayableError {
   }
 
   return {
-    title: 'Something went wrong',
-    body: err instanceof Error ? err.message : 'Unexpected error',
+    title: t('generic.title'),
+    body: err instanceof Error ? err.message : t('generic.unexpectedBody'),
     retryable: true,
     needsCredits: false,
   };

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { resizeImage } from '@/lib/image-resize';
 import { useAppStore } from '@/lib/app-store';
@@ -16,8 +17,11 @@ import styles from './upload-screen.module.css';
  *
  * On success, image is resized client-side and committed to the app store,
  * then we navigate to the catalog screen.
+ *
+ * Day 7: strings moved to i18n (`upload.*`).
  */
 export function UploadScreen(): React.ReactElement {
+  const t = useTranslations('upload');
   const setImage = useAppStore((s) => s.setImage);
   const setScreen = useAppStore((s) => s.setScreen);
 
@@ -32,7 +36,7 @@ export function UploadScreen(): React.ReactElement {
     setError(null);
 
     if (!file.type.startsWith('image/')) {
-      setError('Please choose an image file (JPEG, PNG, or WebP).');
+      setError(t('invalidFile'));
       return;
     }
 
@@ -49,7 +53,11 @@ export function UploadScreen(): React.ReactElement {
       });
       setScreen('catalog');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to process the image');
+      // Note: err.message here comes from resizeImage() (lib/image-resize.ts,
+      // not reviewed in this pack) — if it throws localized-looking English
+      // text, this fallback will leak it untranslated. Flagged as residual
+      // gap; see ADR-010 addendum.
+      setError(err instanceof Error ? err.message : t('genericError'));
     } finally {
       setIsProcessing(false);
     }
@@ -73,11 +81,10 @@ export function UploadScreen(): React.ReactElement {
     <div className={styles.screen}>
       <header className={styles.header}>
         <h1 className={styles.title}>
-          Try a new <span className={styles.titleAccent}>hairstyle</span>
+          {t('titlePrefix')}
+          <span className={styles.titleAccent}>{t('titleAccent')}</span>
         </h1>
-        <p className={styles.subtitle}>
-          Upload a clear photo of your face and try on 40+ AI hairstyles.
-        </p>
+        <p className={styles.subtitle}>{t('subtitle')}</p>
       </header>
 
       <div
@@ -96,16 +103,16 @@ export function UploadScreen(): React.ReactElement {
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
         }}
-        aria-label="Upload photo"
+        aria-label={t('uploadAriaLabel')}
         aria-busy={isProcessing}
       >
         <div className={styles.dropzoneIcon} aria-hidden="true">
           ⬆
         </div>
         <p className={styles.dropzoneTitle}>
-          {isProcessing ? 'Preparing your photo…' : 'Drop a photo or click to choose'}
+          {isProcessing ? t('preparing') : t('dropHint')}
         </p>
-        <p className={styles.dropzoneHint}>JPEG, PNG or WebP · up to 10 MB</p>
+        <p className={styles.dropzoneHint}>{t('sizeHint')}</p>
       </div>
 
       <div className={styles.actions}>
@@ -115,7 +122,7 @@ export function UploadScreen(): React.ReactElement {
           onClick={() => cameraInputRef.current?.click()}
           disabled={isProcessing}
         >
-          <span aria-hidden="true">📷</span> Take a photo
+          <span aria-hidden="true">📷</span> {t('takePhoto')}
         </button>
       </div>
 
@@ -142,10 +149,7 @@ export function UploadScreen(): React.ReactElement {
         tabIndex={-1}
       />
 
-      <p className={styles.privacy}>
-        Your photo stays on your device until you start a generation. We don't store it after the
-        result is delivered.
-      </p>
+      <p className={styles.privacy}>{t('privacy')}</p>
     </div>
   );
 }

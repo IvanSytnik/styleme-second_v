@@ -1,0 +1,335 @@
+{
+  "catalog": {
+    "genderTabsLabel": "Hairstyle category",
+    "genderFemale": "Women",
+    "genderMale": "Men",
+    "hairstyleRadioGroupLabel": "Hairstyle",
+    "generateButton": "Generate ✨",
+    "backToPhoto": "← Photo",
+    "backToPhotoAriaLabel": "Choose a different photo",
+    "hairstyle": {
+      "presets": {
+        "1": {
+          "name": "Classic Bob"
+        },
+        "2": {
+          "name": "Long Bob (Lob)"
+        },
+        "3": {
+          "name": "Pixie"
+        },
+        "4": {
+          "name": "Hollywood Waves"
+        },
+        "5": {
+          "name": "Cascade"
+        },
+        "6": {
+          "name": "Beach Waves"
+        },
+        "7": {
+          "name": "Shag"
+        },
+        "8": {
+          "name": "Long Straight"
+        },
+        "9": {
+          "name": "Afro Curls"
+        },
+        "10": {
+          "name": "French Braid"
+        },
+        "11": {
+          "name": "Messy Bun"
+        },
+        "12": {
+          "name": "High Ponytail"
+        },
+        "13": {
+          "name": "Boxer Braids"
+        },
+        "14": {
+          "name": "Half-Up Half-Down"
+        },
+        "15": {
+          "name": "Low Bun"
+        },
+        "16": {
+          "name": "Asymmetrical Bob"
+        },
+        "17": {
+          "name": "Retro Waves"
+        },
+        "18": {
+          "name": "Curtain Bangs"
+        },
+        "19": {
+          "name": "Voluminous Curls"
+        },
+        "20": {
+          "name": "Sleek Low Ponytail"
+        },
+        "21": {
+          "name": "Fade"
+        },
+        "22": {
+          "name": "Undercut"
+        },
+        "23": {
+          "name": "Pompadour"
+        },
+        "24": {
+          "name": "Textured Crop"
+        },
+        "25": {
+          "name": "Quiff"
+        },
+        "26": {
+          "name": "Box Cut"
+        },
+        "27": {
+          "name": "Half Box"
+        },
+        "28": {
+          "name": "Taper Cut"
+        },
+        "29": {
+          "name": "Caesar Cut"
+        },
+        "30": {
+          "name": "Man Bun"
+        },
+        "31": {
+          "name": "Textured Style"
+        },
+        "32": {
+          "name": "Buzz Cut"
+        },
+        "33": {
+          "name": "Crew Cut"
+        },
+        "34": {
+          "name": "British Cut"
+        },
+        "35": {
+          "name": "Grunge"
+        },
+        "36": {
+          "name": "Tennis Cut"
+        },
+        "37": {
+          "name": "Flat Top"
+        },
+        "38": {
+          "name": "Fade with Design"
+        },
+        "39": {
+          "name": "Long Hair"
+        },
+        "40": {
+          "name": "Side Part"
+        }
+      }
+    },
+    "reference": {
+      "resultLabel": "Custom style from reference photo",
+      "intro": "Upload a photo of someone with the hairstyle you want. The AI will copy the cut, length, colour, and texture onto your selfie.",
+      "unsupportedFormat": "Unsupported format. Please use JPEG, PNG, or WebP.",
+      "tooLarge": "Image is too large. Try a smaller photo.",
+      "processing": "Could not process this image. Try another one.",
+      "uploadAriaLabel": "Upload reference photo",
+      "previewAlt": "Reference hairstyle preview",
+      "processingImage": "Processing image…",
+      "dropHint": "Drop a photo here, or click to choose",
+      "sizeHint": "JPEG, PNG, WebP — up to 2 MB (after resize)",
+      "submit": "Try this hairstyle ✨"
+    },
+    "modeSelector": {
+      "ariaLabel": "How would you like to choose a hairstyle?",
+      "gallery": {
+        "label": "Gallery",
+        "description": "Choose from curated styles"
+      },
+      "custom": {
+        "label": "Describe",
+        "description": "Write your own description"
+      },
+      "reference": {
+        "label": "Reference",
+        "description": "Upload a photo to copy from"
+      }
+    },
+    "customPrompt": {
+      "label": "Describe the hairstyle you want",
+      "help": "Mention length, colour, texture, and any details.",
+      "submit": "Try this style ✨",
+      "placeholders": [
+        "Medium-length wavy bob with copper highlights and a side-swept fringe",
+        "Short pixie cut, platinum blonde, slightly tousled",
+        "Long layered hair with curtain bangs, warm chestnut brown",
+        "Shoulder-length curls, deep auburn, with a soft middle parting"
+      ]
+    }
+  },
+  "processing": {
+    "backButton": "← Back",
+    "tryAgainButton": "Try again",
+    "photoAlt": "Your photo",
+    "title": "Creating your new look",
+    "hint": "Usually takes 15–30 seconds…"
+  },
+  "result": {
+    "shareTitle": "My new look with StyleMe",
+    "shareTextWithStyle": "Tried \"{styleName}\" on StyleMe",
+    "shareTextGeneric": "Tried a new hairstyle on StyleMe",
+    "noResult": "No result to show.",
+    "startOver": "Start over",
+    "title": "Your new look",
+    "beforeAlt": "Before",
+    "before": "Before",
+    "afterAlt": "After",
+    "after": "After",
+    "linkCopied": "✓ Link copied",
+    "sharing": "Sharing…",
+    "share": "Share",
+    "download": "Download ⬇",
+    "tryAnotherStyle": "Try another style",
+    "useAnotherPhoto": "Use another photo"
+  },
+  "errors": {
+    "generic": {
+      "title": "Something went wrong",
+      "unexpectedBody": "Unexpected error"
+    },
+    "QUOTA_EXCEEDED": {
+      "title": "No credits left",
+      "body": "You've used all your free generations for today. Watch an ad to earn more, or come back tomorrow."
+    },
+    "RATE_LIMITED": {
+      "title": "Too fast",
+      "body": "Please wait a moment before trying again."
+    },
+    "UPSTREAM_FAILED": {
+      "title": "Generation failed",
+      "body": "The AI service had trouble processing your image. Please try again."
+    },
+    "VALIDATION_FAILED": {
+      "title": "Invalid request",
+      "body": "Please check your image and try again."
+    },
+    "INVALID_IMAGE": {
+      "title": "Invalid image",
+      "body": "This image cannot be processed. Try a different photo with a clear view of the face."
+    },
+    "FILE_TOO_LARGE": {
+      "title": "Image too large",
+      "body": "Please use an image smaller than 10 MB. We'll resize it for you."
+    },
+    "UNSUPPORTED_MIME": {
+      "title": "Unsupported format",
+      "body": "Please use a JPEG, PNG, or WebP image."
+    },
+    "UNAUTHORIZED": {
+      "title": "Session expired",
+      "body": "Please refresh the page to continue."
+    },
+    "NOT_IMPLEMENTED": {
+      "title": "Coming soon",
+      "body": "This feature isn't available yet."
+    },
+    "AD_SESSION_INVALID": {
+      "title": "Ad session expired",
+      "body": "The ad session is invalid or expired. Please watch the ad again."
+    },
+    "AD_CAP_REACHED": {
+      "title": "Daily ad limit reached",
+      "body": "You've watched the maximum number of ads for today. Come back tomorrow for more!"
+    }
+  },
+  "header": {
+    "brandHomeAriaLabel": "StyleMe — home",
+    "creditsAriaLabel": "Credits",
+    "freeLabel": "Free",
+    "bonusLabel": "Bonus",
+    "openHistoryAriaLabel": "Open history",
+    "historyLabel": "History",
+    "languageSwitcherAriaLabel": "Choose language",
+    "languageNames": {
+      "en": "English",
+      "de": "Deutsch",
+      "uk": "Українська",
+      "ru": "Русский"
+    }
+  },
+  "rewards": {
+    "comingSoonTitle": "Coming soon — watch ads to earn extra generations",
+    "comingSoonAriaLabel": "Watch ad for credit — coming soon",
+    "watchAd": "Watch ad",
+    "soon": "Soon",
+    "adsUnavailable": "Ads are unavailable right now. Please try again later.",
+    "watchAdAriaLabel": "Watch an ad to earn one extra generation",
+    "loading": "Loading…",
+    "claiming": "Claiming…",
+    "devModal": {
+      "dialogAriaLabel": "Rewarded ad (development)",
+      "devBadge": "DEV AD",
+      "fakeVideoText": "Imagine a riveting ad about hair products",
+      "progressAriaLabel": "Ad progress",
+      "rewardUnlocked": "Reward unlocked!",
+      "rewardIn": "Reward in {seconds}s…",
+      "claimButton": "Claim +1 credit 🎉",
+      "dismissButton": "Close (no reward)"
+    },
+    "creditEarnedToast": "+1 credit earned! 🎉",
+    "claimFailedToast": "Could not claim the reward. Please try again."
+  },
+  "upload": {
+    "titlePrefix": "Try a new ",
+    "titleAccent": "hairstyle",
+    "subtitle": "Upload a clear photo of your face and try on 40+ AI hairstyles.",
+    "invalidFile": "Please choose an image file (JPEG, PNG, or WebP).",
+    "genericError": "Failed to process the image",
+    "preparing": "Preparing your photo…",
+    "dropHint": "Drop a photo or click to choose",
+    "sizeHint": "JPEG, PNG or WebP · up to 10 MB",
+    "uploadAriaLabel": "Upload photo",
+    "takePhoto": "Take a photo",
+    "privacy": "Your photo stays on your device until you start a generation. We don't store it after the result is delivered."
+  },
+  "history": {
+    "title": "History",
+    "loadError": "Could not load your history.",
+    "tryAgain": "Try again",
+    "emptyTitle": "No generations yet",
+    "emptyBody": "Upload a photo and try a hairstyle — it'll appear here.",
+    "emptyCta": "Try your first hairstyle ✨",
+    "loadingMore": "Loading more…",
+    "end": "You've seen everything.",
+    "customStyleFallback": "Custom style",
+    "openCardAriaLabel": "Open generation: {label}, created {time}",
+    "back": "← Back",
+    "notFound": "Generation not found.",
+    "regenerate": "Regenerate ✨",
+    "download": "Download ⬇",
+    "share": "Share",
+    "sharing": "Sharing…",
+    "linkCopied": "✓ Link copied",
+    "shareTitle": "My look with StyleMe",
+    "shareText": "Tried \"{styleName}\" on StyleMe",
+    "deleting": "Deleting…",
+    "confirmDelete": "Tap again to confirm delete",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "modeBadge": {
+      "preset": "Preset",
+      "custom": "Custom",
+      "reference": "Reference"
+    }
+  },
+  "theme": {
+    "ariaLabel": "Theme",
+    "light": "Light",
+    "system": "System",
+    "dark": "Dark"
+  }
+}

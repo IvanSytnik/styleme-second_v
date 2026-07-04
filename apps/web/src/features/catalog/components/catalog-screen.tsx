@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { useAppStore } from '@/lib/app-store';
 
@@ -20,8 +21,11 @@ import styles from './catalog-screen.module.css';
  * The old Day 3 catalog jammed Women/Men next to Custom/Reference in one
  * row, which mixes axes. This split keeps "how I choose" separate from
  * "what I'm choosing among" and scales cleanly when we add Trending/Saved.
+ *
+ * Day 7: back-button label + aria-label moved to i18n (`catalog.*`).
  */
 export function CatalogScreen(): React.ReactElement {
+  const t = useTranslations('catalog');
   const image = useAppStore((s) => s.image);
   const setScreen = useAppStore((s) => s.setScreen);
   const [mode, setMode] = useState<CatalogMode>('gallery');
@@ -41,9 +45,9 @@ export function CatalogScreen(): React.ReactElement {
           type="button"
           className={styles.backButton}
           onClick={() => setScreen('upload')}
-          aria-label="Choose a different photo"
+          aria-label={t('backToPhotoAriaLabel')}
         >
-          ← Photo
+          {t('backToPhoto')}
         </button>
 
         {image && (

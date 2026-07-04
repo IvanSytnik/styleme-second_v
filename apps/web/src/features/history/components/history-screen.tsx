@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { useAppStore } from '@/lib/app-store';
 
@@ -16,8 +17,11 @@ import styles from './history-screen.module.css';
  * IntersectionObserver-driven pagination: when the sentinel div at the end
  * of the grid enters the viewport, we fetchNextPage. Single-observer
  * pattern — no manual scroll listeners, no throttling headaches.
+ *
+ * Day 7: strings moved to i18n (`history.*`).
  */
 export function HistoryScreen(): React.ReactElement {
+  const t = useTranslations('history');
   const setScreen = useAppStore((s) => s.setScreen);
   const setDetailGenerationId = useAppStore((s) => s.setDetailGenerationId);
 
@@ -64,7 +68,7 @@ export function HistoryScreen(): React.ReactElement {
     return (
       <section className={styles.screen} aria-busy="true">
         <header className={styles.header}>
-          <h2 className={styles.title}>History</h2>
+          <h2 className={styles.title}>{t('title')}</h2>
         </header>
         <div className={styles.grid}>
           {Array.from({ length: 8 }).map((_, i) => (
@@ -80,16 +84,16 @@ export function HistoryScreen(): React.ReactElement {
     return (
       <section className={styles.screen}>
         <header className={styles.header}>
-          <h2 className={styles.title}>History</h2>
+          <h2 className={styles.title}>{t('title')}</h2>
         </header>
         <div className={styles.errorBox}>
-          <p>Could not load your history.</p>
+          <p>{t('loadError')}</p>
           <button
             type="button"
             className={styles.retryButton}
             onClick={() => void refetch()}
           >
-            Try again
+            {t('tryAgain')}
           </button>
         </div>
       </section>
@@ -101,22 +105,20 @@ export function HistoryScreen(): React.ReactElement {
     return (
       <section className={styles.screen}>
         <header className={styles.header}>
-          <h2 className={styles.title}>History</h2>
+          <h2 className={styles.title}>{t('title')}</h2>
         </header>
         <div className={styles.empty}>
           <span className={styles.emptyIcon} aria-hidden="true">
             🕘
           </span>
-          <h3 className={styles.emptyTitle}>No generations yet</h3>
-          <p className={styles.emptyBody}>
-            Upload a photo and try a hairstyle — it&apos;ll appear here.
-          </p>
+          <h3 className={styles.emptyTitle}>{t('emptyTitle')}</h3>
+          <p className={styles.emptyBody}>{t('emptyBody')}</p>
           <button
             type="button"
             className={styles.primaryButton}
             onClick={() => setScreen('upload')}
           >
-            Try your first hairstyle ✨
+            {t('emptyCta')}
           </button>
         </div>
       </section>
@@ -127,7 +129,7 @@ export function HistoryScreen(): React.ReactElement {
   return (
     <section className={styles.screen}>
       <header className={styles.header}>
-        <h2 className={styles.title}>History</h2>
+        <h2 className={styles.title}>{t('title')}</h2>
         <span className={styles.count} aria-live="polite">
           {items.length}
           {hasNextPage ? '+' : ''}
@@ -147,13 +149,13 @@ export function HistoryScreen(): React.ReactElement {
 
       {isFetchingNextPage && (
         <p className={styles.loadingMore} aria-live="polite">
-          Loading more…
+          {t('loadingMore')}
         </p>
       )}
 
       {!hasNextPage && (
         <p className={styles.end} aria-live="polite">
-          You&apos;ve seen everything.
+          {t('end')}
         </p>
       )}
     </section>

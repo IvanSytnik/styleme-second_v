@@ -1,6 +1,7 @@
 'use client';
 
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 import { publicEnv } from '@/lib/env';
 
@@ -21,8 +22,11 @@ import styles from './watch-ad-button.module.css';
  *   - 'dev' → 15s countdown modal; timer matches the server's
  *             MIN_WATCH_SECONDS so claims never fire too early.
  *   - 'gpt' → real GPT rewarded ad (skeleton until Ad Manager approval).
+ *
+ * Day 7: strings moved to i18n (`rewards.*`).
  */
 export function WatchAdButton(): React.ReactElement {
+  const t = useTranslations('rewards');
   const provider = publicEnv.NEXT_PUBLIC_AD_PROVIDER;
   const { phase, session, startSession, claim, cancel } = useAdReward();
 
@@ -33,12 +37,12 @@ export function WatchAdButton(): React.ReactElement {
         type="button"
         className={styles.buttonDisabled}
         disabled
-        title="Coming soon — watch ads to earn extra generations"
-        aria-label="Watch ad for credit — coming soon"
+        title={t('comingSoonTitle')}
+        aria-label={t('comingSoonAriaLabel')}
       >
         <span aria-hidden="true">🎬</span>
-        <span className={styles.label}>Watch ad</span>
-        <span className={styles.comingSoon}>Soon</span>
+        <span className={styles.label}>{t('watchAd')}</span>
+        <span className={styles.comingSoon}>{t('soon')}</span>
       </button>
     );
   }
@@ -56,7 +60,7 @@ export function WatchAdButton(): React.ReactElement {
         await claim(s.nonce);
       } else {
         if (result === 'error') {
-          toast.error('Ads are unavailable right now. Please try again later.');
+          toast.error(t('adsUnavailable'));
         }
         cancel();
       }
@@ -72,15 +76,15 @@ export function WatchAdButton(): React.ReactElement {
         onClick={() => void handleClick()}
         disabled={busy || phase === 'watching'}
         aria-busy={busy}
-        aria-label="Watch an ad to earn one extra generation"
+        aria-label={t('watchAdAriaLabel')}
       >
         <span aria-hidden="true">🎬</span>
         <span className={styles.label}>
           {phase === 'starting'
-            ? 'Loading…'
+            ? t('loading')
             : phase === 'claiming'
-              ? 'Claiming…'
-              : 'Watch ad'}
+              ? t('claiming')
+              : t('watchAd')}
         </span>
         <span className={styles.plusOne}>+1</span>
       </button>

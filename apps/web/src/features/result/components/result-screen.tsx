@@ -1,21 +1,35 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { useAppStore } from '@/lib/app-store';
+import { useStyleDisplayName } from '@/features/catalog/lib/use-style-display-name';
 
 import styles from './result-screen.module.css';
 
 /**
  * Result screen — side-by-side before/after.
  * Actions: download, share (Web Share API), try another, start over.
+ *
+ * Day 7 (ADR-010 / D3): style name no longer comes from the store
+ * (`resultStyleName` removed) — resolved via `useStyleDisplayName` from
+ * the same `mode` / `selectedStyleId` / `customPrompt` fields
+ * ProcessingScreen used to kick off this same generation. These fields
+ * survive the processing → result transition (only `reset()` clears
+ * them, and reset() is only called by explicit user actions below).
  */
 export function ResultScreen(): React.ReactElement {
+  const t = useTranslations('result');
   const image = useAppStore((s) => s.image);
   const resultUrl = useAppStore((s) => s.resultUrl);
-  const styleName = useAppStore((s) => s.resultStyleName);
+  const mode = useAppStore((s) => s.mode);
+  const styleId = useAppStore((s) => s.selectedStyleId);
+  const customPrompt = useAppStore((s) => s.customPrompt);
   const setScreen = useAppStore((s) => s.setScreen);
   const reset = useAppStore((s) => s.reset);
+
+  const styleName = useStyleDisplayName({ mode, styleId, customPrompt });
 
   const [shareState, setShareState] = useState<'idle' | 'sharing' | 'copied'>('idle');
 
@@ -49,8 +63,8 @@ export function ResultScreen(): React.ReactElement {
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({
           files: [file],
-          title: 'My new look with StyleMe',
-          text: styleName ? `Tried "${styleName}" on StyleMe` : 'Tried a new hairstyle on StyleMe',
+          title: t('shareTitle'),
+          text: styleName ? t('shareTextWithStyle', { styleName }) : t('shareTextGeneric'),
         });
         setShareState('idle');
         return;
@@ -67,9 +81,9 @@ export function ResultScreen(): React.ReactElement {
   if (!resultUrl) {
     return (
       <div className={styles.screen}>
-        <p>No result to show.</p>
+        <p>{t('noResult')}</p>
         <button type="button" className={styles.primaryButton} onClick={reset}>
-          Start over
+          {t('startOver')}
         </button>
       </div>
     );
@@ -78,36 +92,36 @@ export function ResultScreen(): React.ReactElement {
   return (
     <div className={styles.screen}>
       <header className={styles.header}>
-        <h2 className={styles.title}>Your new look</h2>
+        <h2 className={styles.title}>{t('title')}</h2>
         {styleName && <p className={styles.subtitle}>{styleName}</p>}
       </header>
 
       <div className={styles.compare}>
         <figure className={styles.figure}>
-          <img src={image?.previewUrl} alt="Before" />
-          <figcaption className={styles.caption}>Before</figcaption>
+          <img src={image?.previewUrl} alt={t('beforeAlt')} />
+          <figcaption className={styles.caption}>{t('before')}</figcaption>
         </figure>
         <figure className={styles.figure}>
-          <img src={resultUrl} alt="After" />
-          <figcaption className={`${styles.caption} ${styles.captionAfter}`}>After</figcaption>
+          <img src={resultUrl} alt={t('afterAlt')} />
+          <figcaption className={`${styles.caption} ${styles.captionAfter}`}>{t('after')}</figcaption>
         </figure>
       </div>
 
       <div className={styles.actions}>
         <button type="button" className={styles.secondaryButton} onClick={handleShare}>
-          {shareState === 'copied' ? '✓ Link copied' : shareState === 'sharing' ? 'Sharing…' : 'Share'}
+          {shareState === 'copied' ? t('linkCopied') : shareState === 'sharing' ? t('sharing') : t('share')}
         </button>
         <button type="button" className={styles.primaryButton} onClick={handleDownload}>
-          Download ⬇
+          {t('download')}
         </button>
       </div>
 
       <div className={styles.secondaryActions}>
         <button type="button" className={styles.linkButton} onClick={() => setScreen('catalog')}>
-          Try another style
+          {t('tryAnotherStyle')}
         </button>
         <button type="button" className={styles.linkButton} onClick={reset}>
-          Use another photo
+          {t('useAnotherPhoto')}
         </button>
       </div>
     </div>

@@ -6,6 +6,12 @@
  * and must not ship in the client bundle.
  *
  * The web app should only ever import from `@styleme/shared` (root).
+ *
+ * Day 7 (ADR-010 / D4): `getPromptById(id)` renamed to
+ * `getPrompt(domain, presetId)`. `domain` is validated but only
+ * `'hairstyle'` exists until the Day 9 seam-1 migration adds a real
+ * `domain` column — this fixes the call-site signature now so Day 9
+ * never has to touch `transform.ts` again for this reason.
  */
 
 export interface HairstylePrompt {
@@ -13,7 +19,9 @@ export interface HairstylePrompt {
   readonly prompt: string;
 }
 
-export const HAIRSTYLE_PROMPTS: ReadonlyMap<number, string> = new Map([
+export type PromptDomain = 'hairstyle';
+
+const HAIRSTYLE_PROMPTS: ReadonlyMap<number, string> = new Map([
   // ===== FEMALE (1–20) =====
   [1,  'Change the hairstyle to a classic bob haircut, sleek and straight, chin length, clean edges. Keep the face exactly the same, only change the hair. Photorealistic.'],
   [2,  'Change the hairstyle to a long bob (lob) haircut, shoulder length, sleek and shiny, modern style. Keep the face exactly the same, only change the hair. Photorealistic.'],
@@ -59,6 +67,14 @@ export const HAIRSTYLE_PROMPTS: ReadonlyMap<number, string> = new Map([
   [40, 'Change the hairstyle to a classic side part, clean professional look, neatly combed to side. Keep the face exactly the same, only change the hair. Photorealistic.'],
 ]);
 
+export function getPrompt(domain: PromptDomain, presetId: number): string | undefined {
+  if (domain !== 'hairstyle') return undefined;
+  return HAIRSTYLE_PROMPTS.get(presetId);
+}
+
+/** @deprecated Day 7 — use getPrompt('hairstyle', id) instead. Kept only
+ * in case an external caller wasn't caught by the grep in ADR-010; will
+ * be removed in Day 8. */
 export function getPromptById(id: number): string | undefined {
-  return HAIRSTYLE_PROMPTS.get(id);
+  return getPrompt('hairstyle', id);
 }

@@ -8,6 +8,15 @@
  * Day 5 (ADR-008): + 'history' and 'history-detail' screens.
  * `detailGenerationId` carries which row to show when in history-detail.
  * The row itself lives in React Query cache (avoid duplicating server state).
+ *
+ * Day 7 (ADR-010 / D3): `resultStyleName` REMOVED. It used to store the
+ * server's `TransformResult.style`, which is now a debug-only English
+ * label, never shown in the UI. ResultScreen instead calls
+ * `useStyleDisplayName({ mode, styleId, customPrompt })` — the same
+ * store fields already read by ProcessingScreen. This is safe because
+ * `mode` / `selectedStyleId` / `customPrompt` are only cleared by
+ * `reset()`, which is an explicit user action (never fired automatically
+ * on the processing → result transition) — see setResult below.
  */
 
 'use client';
@@ -45,7 +54,6 @@ interface AppState {
   customPrompt: string | null;
   referenceImage: ReferenceImage | null;
   resultUrl: string | null;
-  resultStyleName: string | null;
 
   /** Day 5: which generation to render on the history-detail screen. */
   detailGenerationId: string | null;
@@ -58,7 +66,7 @@ interface AppState {
   setCustomPrompt: (prompt: string | null) => void;
   setReferenceImage: (ref: ReferenceImage | null) => void;
 
-  setResult: (url: string, styleName: string) => void;
+  setResult: (url: string) => void;
   setDetailGenerationId: (id: string | null) => void;
 
   reset: () => void;
@@ -72,7 +80,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   customPrompt: null,
   referenceImage: null,
   resultUrl: null,
-  resultStyleName: null,
   detailGenerationId: null,
 
   setScreen: (screen) => set({ screen }),
@@ -95,8 +102,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ referenceImage });
   },
 
-  setResult: (resultUrl, resultStyleName) =>
-    set({ resultUrl, resultStyleName, screen: 'result' }),
+  setResult: (resultUrl) => set({ resultUrl, screen: 'result' }),
 
   setDetailGenerationId: (detailGenerationId) => set({ detailGenerationId }),
 
@@ -113,7 +119,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       customPrompt: null,
       referenceImage: null,
       resultUrl: null,
-      resultStyleName: null,
       detailGenerationId: null,
     });
   },

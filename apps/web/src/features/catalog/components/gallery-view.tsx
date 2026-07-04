@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import {
   FEMALE_HAIRSTYLES,
@@ -18,8 +19,15 @@ import styles from './gallery-view.module.css';
  *
  * Sets mode=preset + selectedStyleId, then navigates to processing.
  * The processing screen runs the mutation on mount.
+ *
+ * Day 7 (ADR-010 / D2): style names no longer come from `@styleme/shared`
+ * (the `name` field was removed) — resolved here via i18n, keyed by the
+ * same numeric `id` that's already the DB/API identity.
  */
 export function GalleryView(): React.ReactElement {
+  const t = useTranslations('catalog');
+  const tPresets = useTranslations('catalog.hairstyle.presets');
+
   const selectedStyleId = useAppStore((s) => s.selectedStyleId);
   const setSelectedStyleId = useAppStore((s) => s.setSelectedStyleId);
   const setMode = useAppStore((s) => s.setMode);
@@ -40,7 +48,7 @@ export function GalleryView(): React.ReactElement {
 
   return (
     <div className={styles.root}>
-      <div className={styles.tabs} role="tablist" aria-label="Hairstyle category">
+      <div className={styles.tabs} role="tablist" aria-label={t('genderTabsLabel')}>
         {(['female', 'male'] as const).map((g) => (
           <button
             key={g}
@@ -50,12 +58,12 @@ export function GalleryView(): React.ReactElement {
             className={`${styles.tab} ${gender === g ? styles.tabActive : ''}`}
             onClick={() => setGender(g)}
           >
-            {g === 'female' ? 'Women' : 'Men'}
+            {g === 'female' ? t('genderFemale') : t('genderMale')}
           </button>
         ))}
       </div>
 
-      <div className={styles.grid} role="radiogroup" aria-label="Hairstyle">
+      <div className={styles.grid} role="radiogroup" aria-label={t('hairstyleRadioGroupLabel')}>
         {list.map((style) => (
           <button
             key={style.id}
@@ -68,7 +76,7 @@ export function GalleryView(): React.ReactElement {
             <span className={styles.cardEmoji} aria-hidden="true">
               {style.emoji}
             </span>
-            <span className={styles.cardName}>{style.name}</span>
+            <span className={styles.cardName}>{tPresets(`${style.id}.name`)}</span>
           </button>
         ))}
       </div>
@@ -79,7 +87,7 @@ export function GalleryView(): React.ReactElement {
         onClick={start}
         disabled={selectedStyleId === null}
       >
-        Generate ✨
+        {t('generateButton')}
       </button>
     </div>
   );

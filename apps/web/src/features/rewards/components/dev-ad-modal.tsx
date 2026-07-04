@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslations } from 'next-intl';
 
 import styles from './dev-ad-modal.module.css';
 
@@ -32,8 +33,11 @@ interface Props {
  * to the header, not the viewport, and drifts off-screen. Portaling to
  * <body> sidesteps the transformed ancestor entirely. This is why every
  * modal library (Radix, Headless UI) portals by default.
+ *
+ * Day 7: strings moved to i18n (`rewards.devModal.*`).
  */
 export function DevAdModal({ minWatchSeconds, onComplete, onDismiss }: Props): React.ReactElement | null {
+  const t = useTranslations('rewards.devModal');
   const [remaining, setRemaining] = useState(minWatchSeconds);
   const [mounted, setMounted] = useState(false);
   const done = remaining <= 0;
@@ -79,16 +83,14 @@ export function DevAdModal({ minWatchSeconds, onComplete, onDismiss }: Props): R
         className={styles.dialog}
         role="dialog"
         aria-modal="true"
-        aria-label="Rewarded ad (development)"
+        aria-label={t('dialogAriaLabel')}
         tabIndex={-1}
       >
-        <div className={styles.devBadge}>DEV AD</div>
+        <div className={styles.devBadge}>{t('devBadge')}</div>
 
         <div className={styles.fakeVideo} aria-hidden="true">
           <span className={styles.fakeVideoIcon}>🎬</span>
-          <p className={styles.fakeVideoText}>
-            Imagine a riveting ad about hair products
-          </p>
+          <p className={styles.fakeVideoText}>{t('fakeVideoText')}</p>
         </div>
 
         <div
@@ -97,23 +99,23 @@ export function DevAdModal({ minWatchSeconds, onComplete, onDismiss }: Props): R
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(progress)}
-          aria-label="Ad progress"
+          aria-label={t('progressAriaLabel')}
         >
           <div className={styles.progressBar} style={{ width: `${progress}%` }} />
         </div>
 
         <p className={styles.timer} aria-live="polite">
-          {done ? 'Reward unlocked!' : `Reward in ${remaining}s…`}
+          {done ? t('rewardUnlocked') : t('rewardIn', { seconds: remaining })}
         </p>
 
         <div className={styles.actions}>
           {done ? (
             <button type="button" className={styles.claimButton} onClick={onComplete}>
-              Claim +1 credit 🎉
+              {t('claimButton')}
             </button>
           ) : (
             <button type="button" className={styles.dismissButton} onClick={onDismiss}>
-              Close (no reward)
+              {t('dismissButton')}
             </button>
           )}
         </div>

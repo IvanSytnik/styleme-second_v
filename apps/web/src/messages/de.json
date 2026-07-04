@@ -1,0 +1,335 @@
+{
+  "catalog": {
+    "genderTabsLabel": "Frisurkategorie",
+    "genderFemale": "Damen",
+    "genderMale": "Herren",
+    "hairstyleRadioGroupLabel": "Frisur",
+    "generateButton": "Generieren ✨",
+    "backToPhoto": "← Foto",
+    "backToPhotoAriaLabel": "Anderes Foto wählen",
+    "hairstyle": {
+      "presets": {
+        "1": {
+          "name": "Klassischer Bob"
+        },
+        "2": {
+          "name": "Langer Bob (Lob)"
+        },
+        "3": {
+          "name": "Pixie"
+        },
+        "4": {
+          "name": "Hollywood-Wellen"
+        },
+        "5": {
+          "name": "Kaskade"
+        },
+        "6": {
+          "name": "Beach Waves"
+        },
+        "7": {
+          "name": "Shag-Cut"
+        },
+        "8": {
+          "name": "Lange glatte Haare"
+        },
+        "9": {
+          "name": "Afro-Locken"
+        },
+        "10": {
+          "name": "Französischer Zopf"
+        },
+        "11": {
+          "name": "Lässiger Dutt"
+        },
+        "12": {
+          "name": "Hoher Pferdeschwanz"
+        },
+        "13": {
+          "name": "Boxerzöpfe"
+        },
+        "14": {
+          "name": "Halb hoch, halb offen"
+        },
+        "15": {
+          "name": "Tiefer Dutt"
+        },
+        "16": {
+          "name": "Asymmetrischer Bob"
+        },
+        "17": {
+          "name": "Retro-Wellen"
+        },
+        "18": {
+          "name": "Curtain Bangs"
+        },
+        "19": {
+          "name": "Voluminöse Locken"
+        },
+        "20": {
+          "name": "Glatter tiefer Pferdeschwanz"
+        },
+        "21": {
+          "name": "Fade"
+        },
+        "22": {
+          "name": "Undercut"
+        },
+        "23": {
+          "name": "Pompadour"
+        },
+        "24": {
+          "name": "Textured Crop"
+        },
+        "25": {
+          "name": "Quiff"
+        },
+        "26": {
+          "name": "Boxenschnitt"
+        },
+        "27": {
+          "name": "Halbboxenschnitt"
+        },
+        "28": {
+          "name": "Taper Cut"
+        },
+        "29": {
+          "name": "Caesar Cut"
+        },
+        "30": {
+          "name": "Man Bun"
+        },
+        "31": {
+          "name": "Texturierter Schnitt"
+        },
+        "32": {
+          "name": "Buzz Cut"
+        },
+        "33": {
+          "name": "Crew Cut"
+        },
+        "34": {
+          "name": "Britischer Schnitt"
+        },
+        "35": {
+          "name": "Grunge"
+        },
+        "36": {
+          "name": "Tennisschnitt"
+        },
+        "37": {
+          "name": "Flat Top"
+        },
+        "38": {
+          "name": "Fade mit Muster"
+        },
+        "39": {
+          "name": "Lange Männerhaare"
+        },
+        "40": {
+          "name": "Seitenscheitel"
+        }
+      }
+    },
+    "reference": {
+      "resultLabel": "Individueller Stil aus Referenzfoto",
+      "intro": "Laden Sie ein Foto einer Person mit der gewünschten Frisur hoch. Die KI überträgt Schnitt, Länge, Farbe und Textur auf Ihr Selfie.",
+      "unsupportedFormat": "Nicht unterstütztes Format. Bitte JPEG, PNG oder WebP verwenden.",
+      "tooLarge": "Bild ist zu groß. Versuchen Sie ein kleineres Foto.",
+      "processing": "Dieses Bild konnte nicht verarbeitet werden. Versuchen Sie ein anderes.",
+      "uploadAriaLabel": "Referenzfoto hochladen",
+      "previewAlt": "Vorschau der Referenzfrisur",
+      "processingImage": "Bild wird verarbeitet…",
+      "dropHint": "Foto hierher ziehen oder klicken zum Auswählen",
+      "sizeHint": "JPEG, PNG, WebP — bis zu 2 MB (nach Größenänderung)",
+      "submit": "Diese Frisur ausprobieren ✨"
+    },
+    "modeSelector": {
+      "ariaLabel": "Wie möchten Sie eine Frisur auswählen?",
+      "gallery": {
+        "label": "Galerie",
+        "description": "Aus kuratierten Stilen wählen"
+      },
+      "custom": {
+        "label": "Beschreiben",
+        "description": "Eigene Beschreibung schreiben"
+      },
+      "reference": {
+        "label": "Referenz",
+        "description": "Foto zum Kopieren hochladen"
+      }
+    },
+    "customPrompt": {
+      "label": "Beschreiben Sie die gewünschte Frisur",
+      "help": "Nennen Sie Länge, Farbe, Textur und weitere Details.",
+      "submit": "Diesen Stil ausprobieren ✨",
+      "placeholders": [
+        "Mittellanger, gewellter Bob mit kupferfarbenen Strähnen und seitlichem Pony",
+        "Kurzer Pixie-Cut, platinblond, leicht zerzaust",
+        "Lange, gestufte Haare mit Curtain Bangs, warmes Kastanienbraun",
+        "Schulterlange Locken, tiefes Kupferrot, mit weichem Mittelscheitel"
+      ]
+    }
+  },
+  "processing": {
+    "backButton": "← Zurück",
+    "tryAgainButton": "Erneut versuchen",
+    "photoAlt": "Ihr Foto",
+    "title": "Ihr neuer Look entsteht",
+    "hint": "Dauert normalerweise 15–30 Sekunden…"
+  },
+  "result": {
+    "shareTitle": "Mein neuer Look mit StyleMe",
+    "shareTextWithStyle": "„{styleName}“ mit StyleMe ausprobiert",
+    "shareTextGeneric": "Neue Frisur mit StyleMe ausprobiert",
+    "noResult": "Kein Ergebnis vorhanden.",
+    "startOver": "Neu starten",
+    "title": "Ihr neuer Look",
+    "beforeAlt": "Vorher",
+    "before": "Vorher",
+    "afterAlt": "Nachher",
+    "after": "Nachher",
+    "linkCopied": "✓ Link kopiert",
+    "sharing": "Wird geteilt…",
+    "share": "Teilen",
+    "download": "Herunterladen ⬇",
+    "tryAnotherStyle": "Anderen Stil ausprobieren",
+    "useAnotherPhoto": "Anderes Foto verwenden"
+  },
+  "errors": {
+    "generic": {
+      "title": "Etwas ist schiefgelaufen",
+      "unexpectedBody": "Unerwarteter Fehler"
+    },
+    "QUOTA_EXCEEDED": {
+      "title": "Keine Credits mehr",
+      "body": "Sie haben alle kostenlosen Generierungen für heute genutzt. Schauen Sie eine Werbung an oder kommen Sie morgen wieder."
+    },
+    "RATE_LIMITED": {
+      "title": "Zu schnell",
+      "body": "Bitte warten Sie einen Moment, bevor Sie es erneut versuchen."
+    },
+    "UPSTREAM_FAILED": {
+      "title": "Generierung fehlgeschlagen",
+      "body": "Der KI-Dienst hatte Probleme bei der Verarbeitung Ihres Bildes. Bitte versuchen Sie es erneut."
+    },
+    "VALIDATION_FAILED": {
+      "title": "Ungültige Anfrage",
+      "body": "Bitte überprüfen Sie Ihr Bild und versuchen Sie es erneut."
+    },
+    "INVALID_IMAGE": {
+      "title": "Ungültiges Bild",
+      "body": "Dieses Bild kann nicht verarbeitet werden. Versuchen Sie ein anderes Foto mit klar erkennbarem Gesicht."
+    },
+    "FILE_TOO_LARGE": {
+      "title": "Bild zu groß",
+      "body": "Bitte verwenden Sie ein Bild unter 10 MB. Wir passen die Größe für Sie an."
+    },
+    "UNSUPPORTED_MIME": {
+      "title": "Nicht unterstütztes Format",
+      "body": "Bitte verwenden Sie ein JPEG-, PNG- oder WebP-Bild."
+    },
+    "UNAUTHORIZED": {
+      "title": "Sitzung abgelaufen",
+      "body": "Bitte laden Sie die Seite neu, um fortzufahren."
+    },
+    "NOT_IMPLEMENTED": {
+      "title": "Demnächst verfügbar",
+      "body": "Diese Funktion ist noch nicht verfügbar."
+    },
+    "AD_SESSION_INVALID": {
+      "title": "Werbesitzung abgelaufen",
+      "body": "Die Werbesitzung ist ungültig oder abgelaufen. Bitte schauen Sie die Werbung erneut an."
+    },
+    "AD_CAP_REACHED": {
+      "title": "Tageslimit für Werbung erreicht",
+      "body": "Sie haben heute die maximale Anzahl an Werbungen angesehen. Kommen Sie morgen für mehr wieder!"
+    }
+  },
+  "header": {
+    "brandHomeAriaLabel": "StyleMe — Startseite",
+    "creditsAriaLabel": "Credits",
+    "freeLabel": "Kostenlos",
+    "bonusLabel": "Bonus",
+    "openHistoryAriaLabel": "Verlauf öffnen",
+    "historyLabel": "Verlauf",
+    "languageSwitcherAriaLabel": "Sprache wählen",
+    "languageNames": {
+      "en": "English",
+      "de": "Deutsch",
+      "uk": "Українська",
+      "ru": "Русский"
+    }
+  },
+  "rewards": {
+    "comingSoonTitle": "Demnächst — Werbung ansehen für zusätzliche Generierungen",
+    "comingSoonAriaLabel": "Werbung für Credit ansehen — demnächst",
+    "watchAd": "Werbung ansehen",
+    "soon": "Bald",
+    "adsUnavailable": "Werbung ist derzeit nicht verfügbar. Bitte versuchen Sie es später erneut.",
+    "watchAdAriaLabel": "Werbung ansehen für eine zusätzliche Generierung",
+    "loading": "Wird geladen…",
+    "claiming": "Wird gutgeschrieben…",
+    "devModal": {
+      "dialogAriaLabel": "Belohnte Werbung (Entwicklung)",
+      "devBadge": "DEV WERBUNG",
+      "fakeVideoText": "Stellen Sie sich eine spannende Werbung für Haarprodukte vor",
+      "progressAriaLabel": "Werbefortschritt",
+      "rewardUnlocked": "Belohnung freigeschaltet!",
+      "rewardIn": "Belohnung in {seconds}s…",
+      "claimButton": "+1 Credit abholen 🎉",
+      "dismissButton": "Schließen (keine Belohnung)"
+    },
+    "creditEarnedToast": "+1 Credit erhalten! 🎉",
+    "claimFailedToast": "Belohnung konnte nicht eingelöst werden. Bitte versuchen Sie es erneut."
+  },
+  "upload": {
+    "titlePrefix": "Neue ",
+    "titleAccent": "Frisur ausprobieren",
+    "subtitle": "Laden Sie ein klares Foto Ihres Gesichts hoch und probieren Sie über 40 KI-Frisuren aus.",
+    "invalidFile": "Bitte wählen Sie eine Bilddatei (JPEG, PNG oder WebP).",
+    "genericError": "Bildverarbeitung fehlgeschlagen",
+    "preparing": "Ihr Foto wird vorbereitet…",
+    "dropHint": "Foto hierher ziehen oder klicken zum Auswählen",
+    "sizeHint": "JPEG, PNG oder WebP · bis zu 10 MB",
+    "uploadAriaLabel": "Foto hochladen",
+    "takePhoto": "Foto aufnehmen",
+    "privacy": "Ihr Foto bleibt bis zum Start der Generierung auf Ihrem Gerät. Wir speichern es nicht nach der Ergebnislieferung."
+  },
+  "history": {
+    "title": "Verlauf",
+    "loadError": "Verlauf konnte nicht geladen werden.",
+    "tryAgain": "Erneut versuchen",
+    "emptyTitle": "Noch keine Generierungen",
+    "emptyBody": "Laden Sie ein Foto hoch und probieren Sie eine Frisur aus — sie erscheint hier.",
+    "emptyCta": "Erste Frisur ausprobieren ✨",
+    "loadingMore": "Weitere werden geladen…",
+    "end": "Sie haben alles gesehen.",
+    "customStyleFallback": "Individueller Stil",
+    "openCardAriaLabel": "Generierung öffnen: {label}, erstellt {time}",
+    "back": "← Zurück",
+    "notFound": "Generierung nicht gefunden.",
+    "regenerate": "Erneut generieren ✨",
+    "download": "Herunterladen ⬇",
+    "share": "Teilen",
+    "sharing": "Wird geteilt…",
+    "linkCopied": "✓ Link kopiert",
+    "shareTitle": "Mein Look mit StyleMe",
+    "shareText": "„{styleName}“ mit StyleMe ausprobiert",
+    "deleting": "Wird gelöscht…",
+    "confirmDelete": "Erneut tippen, um Löschen zu bestätigen",
+    "delete": "Löschen",
+    "cancel": "Abbrechen",
+    "modeBadge": {
+      "preset": "Vorlage",
+      "custom": "Individuell",
+      "reference": "Referenz"
+    }
+  },
+  "theme": {
+    "ariaLabel": "Design",
+    "light": "Hell",
+    "system": "System",
+    "dark": "Dunkel"
+  }
+}

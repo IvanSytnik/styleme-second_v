@@ -13,6 +13,12 @@
  * Hotfix (post-Day 4): server-side retry with backoff for Replicate 429.
  * Day 5 (ADR-008): insertGeneration now carries `mode` + `customPrompt`
  * so history can drive deterministic Regenerate.
+ * Day 7 (ADR-010): `getPromptById` → `getPrompt('hairstyle', id)`.
+ * `styleName` is now written from `HAIRSTYLE_CANONICAL_NAME_EN` — it is
+ * a debug/analytics label only, never rendered as-is in the UI (the web
+ * app resolves display names client-side via i18n, keyed by styleId).
+ * `'Reference photo'` literal below stays server-side only for the same
+ * reason — the UI never reads `TransformResult.style` for display.
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express';
@@ -24,6 +30,7 @@ import {
   ACCEPTED_MIME_TYPES,
   ERROR_CODES,
   HAIRSTYLES_UI_BY_ID,
+  HAIRSTYLE_CANONICAL_NAME_EN,
   LIMITS,
   isValidStyleId,
   transformByStyleIdSchema,
@@ -32,7 +39,7 @@ import {
   type GenerationMode,
   type TransformResult,
 } from '@styleme/shared';
-import { getPromptById } from '@styleme/shared/hairstyles/prompts';
+import { getPrompt } from '@styleme/shared/hairstyles/prompts';
 
 import { insertGeneration } from '../db/generations';
 import { env } from '../env';
@@ -173,6 +180,7 @@ interface RunTransformArgs {
   /** Day 5: recorded on the row so Regenerate can reconstruct the pipeline. */
   mode: GenerationMode;
   styleId: number | null;
+  /** Day 7: debug/analytics label only — see file header. */
   styleName: string;
   /** Only meaningful when mode === 'custom'. */
   customPrompt: string | null;
@@ -260,18 +268,23 @@ transformRouter.post(
       if (!isValidStyleId(styleId)) {
         throw new HttpError(400, ERROR_CODES.INVALID_STYLE_ID, 'Invalid hairstyle id');
       }
-      const style = HAIRSTYLES_UI_BY_ID.get(styleId)!;
-      const prompt = getPromptById(styleId);
+      // Confirm the id resolves in the UI catalog too (keeps both maps
+      // in lockstep — a prompt with no UI entry, or vice versa, is a bug).
+      if (!HAIRSTYLES_UI_BY_ID.has(styleId)) {
+        throw new HttpError(500, ERROR_CODES.INTERNAL_ERROR, 'Style id missing from UI catalog');
+      }
+      const prompt = getPrompt('hairstyle', styleId);
       if (!prompt) {
         throw new HttpError(500, ERROR_CODES.INTERNAL_ERROR, 'Prompt not found');
       }
+      const styleName = HAIRSTYLE_CANONICAL_NAME_EN.get(styleId) ?? `Style #${styleId}`;
       const result = await runTransform({
         userId: req.user!.id,
         imageBuffer: req.file.buffer,
         prompt,
         mode: 'preset',
         styleId,
-        styleName: style.name,
+        styleName,
         customPrompt: null,
       });
       res.json({ success: true, data: result });
@@ -343,7 +356,8 @@ transformRouter.post(
         prompt,
         mode: 'reference',
         styleId: null,
-        styleName: 'Reference photo',
+        // Debug label only — UI shows a translated generic label instead.
+        styleName: 'Reference photo (debug label)',
         customPrompt: null,
       });
       res.json({ success: true, data: result });

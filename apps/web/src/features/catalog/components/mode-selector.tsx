@@ -1,49 +1,32 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import styles from './mode-selector.module.css';
 
 export type CatalogMode = 'gallery' | 'custom' | 'reference';
-
-interface ModeConfig {
-  readonly id: CatalogMode;
-  readonly label: string;
-  readonly description: string;
-  readonly icon: string;
-}
-
-const MODES: readonly ModeConfig[] = [
-  {
-    id: 'gallery',
-    label: 'Gallery',
-    description: 'Choose from curated styles',
-    icon: '🎨',
-  },
-  {
-    id: 'custom',
-    label: 'Describe',
-    description: 'Write your own description',
-    icon: '✍️',
-  },
-  {
-    id: 'reference',
-    label: 'Reference',
-    description: 'Upload a photo to copy from',
-    icon: '📸',
-  },
-];
 
 interface Props {
   value: CatalogMode;
   onChange: (mode: CatalogMode) => void;
 }
 
+/**
+ * Day 7: labels/descriptions moved to i18n (`catalog.modeSelector.*`).
+ * The mode list itself (id + icon) stays static — only the id is used
+ * for logic, icon is decorative and language-agnostic.
+ */
 export function ModeSelector({ value, onChange }: Props): React.ReactElement {
+  const t = useTranslations('catalog.modeSelector');
+
+  const MODES: ReadonlyArray<{ id: CatalogMode; icon: string }> = [
+    { id: 'gallery', icon: '🎨' },
+    { id: 'custom', icon: '✍️' },
+    { id: 'reference', icon: '📸' },
+  ];
+
   return (
-    <div
-      className={styles.root}
-      role="radiogroup"
-      aria-label="How would you like to choose a hairstyle?"
-    >
+    <div className={styles.root} role="radiogroup" aria-label={t('ariaLabel')}>
       {MODES.map((mode) => {
         const selected = mode.id === value;
         return (
@@ -58,8 +41,8 @@ export function ModeSelector({ value, onChange }: Props): React.ReactElement {
             <span className={styles.icon} aria-hidden="true">
               {mode.icon}
             </span>
-            <span className={styles.label}>{mode.label}</span>
-            <span className={styles.description}>{mode.description}</span>
+            <span className={styles.label}>{t(`${mode.id}.label`)}</span>
+            <span className={styles.description}>{t(`${mode.id}.description`)}</span>
           </button>
         );
       })}

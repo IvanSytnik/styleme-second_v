@@ -1,0 +1,28 @@
+.select {
+  appearance: none;
+  border: 1px solid var(--border, #d4d4d8);
+  border-radius: 8px;
+  padding: 6px 28px 6px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  background-color: var(--background, #fff);
+  color: var(--foreground, #18181b);
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) center,
+    calc(100% - 9px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.select:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.select:focus-visible {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: 2px;
+}

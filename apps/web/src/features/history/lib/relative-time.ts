@@ -4,12 +4,11 @@
  *
  * Kept in feature/history/lib because Day 5 is the only current consumer.
  * If a second consumer appears, promote to /lib.
+ *
+ * Day 7: takes `locale` as a parameter instead of hardcoding 'en'. This
+ * is a plain function (not a hook) so the caller supplies the active
+ * locale, typically via `useLocale()` from next-intl.
  */
-
-const rtf =
-  typeof Intl !== 'undefined' && 'RelativeTimeFormat' in Intl
-    ? new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
-    : null;
 
 const MINUTE = 60;
 const HOUR = 3600;
@@ -17,16 +16,21 @@ const DAY = 86400;
 const WEEK = DAY * 7;
 const MONTH = DAY * 30;
 
-export function relativeTime(iso: string): string {
+export function relativeTime(iso: string, locale: string): string {
   const then = Date.parse(iso);
   if (Number.isNaN(then)) return '';
 
   const seconds = Math.round((then - Date.now()) / 1000);
   const abs = Math.abs(seconds);
 
+  const rtf =
+    typeof Intl !== 'undefined' && 'RelativeTimeFormat' in Intl
+      ? new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
+      : null;
+
   if (!rtf) {
     // Very defensive fallback — modern browsers all have RelativeTimeFormat.
-    return new Date(iso).toLocaleDateString();
+    return new Date(iso).toLocaleDateString(locale);
   }
 
   if (abs < MINUTE) return rtf.format(Math.round(seconds), 'second');

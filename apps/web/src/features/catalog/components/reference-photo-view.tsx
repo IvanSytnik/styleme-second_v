@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 import { ACCEPTED_MIME_TYPES, LIMITS } from '@styleme/shared';
 
@@ -19,8 +20,11 @@ import styles from './reference-photo-view.module.css';
  *
  * Content validation (face detection, NSFW) is OUT OF SCOPE for Day 4 —
  * backlogged for Day 9 alongside NSFW moderation on the primary photo.
+ *
+ * Day 7: strings moved to i18n (`catalog.reference.*`).
  */
 export function ReferencePhotoView(): React.ReactElement {
+  const t = useTranslations('catalog.reference');
   const referenceImage = useAppStore((s) => s.referenceImage);
   const setReferenceImage = useAppStore((s) => s.setReferenceImage);
   const setMode = useAppStore((s) => s.setMode);
@@ -36,14 +40,14 @@ export function ReferencePhotoView(): React.ReactElement {
       if (
         !(ACCEPTED_MIME_TYPES as readonly string[]).includes(file.type)
       ) {
-        toast.error('Unsupported format. Please use JPEG, PNG, or WebP.');
+        toast.error(t('unsupportedFormat'));
         return;
       }
       if (file.size > LIMITS.MAX_FILE_SIZE_BYTES * 5) {
         // The client resize will make it small enough to upload — but if
         // the source is enormous (>10 MB), the ImageBitmap step will
         // burn memory. Reject early with a friendly message.
-        toast.error('Image is too large. Try a smaller photo.');
+        toast.error(t('tooLarge'));
         return;
       }
 
@@ -76,12 +80,12 @@ export function ReferencePhotoView(): React.ReactElement {
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error('[reference-photo] resize failed', err);
-        toast.error('Could not process this image. Try another one.');
+        toast.error(t('processing'));
       } finally {
         setIsProcessing(false);
       }
     },
-    [setReferenceImage],
+    [setReferenceImage, t],
   );
 
   const onDrop = useCallback(
@@ -119,10 +123,7 @@ export function ReferencePhotoView(): React.ReactElement {
 
   return (
     <div className={styles.root}>
-      <p className={styles.intro}>
-        Upload a photo of someone with the hairstyle you want. The AI will copy
-        the cut, length, colour, and texture onto your selfie.
-      </p>
+      <p className={styles.intro}>{t('intro')}</p>
 
       <div
         className={`${styles.dropzone} ${isDragging ? styles.dragging : ''} ${referenceImage ? styles.hasPreview : ''}`}
@@ -138,7 +139,7 @@ export function ReferencePhotoView(): React.ReactElement {
             inputRef.current?.click();
           }
         }}
-        aria-label="Upload reference photo"
+        aria-label={t('uploadAriaLabel')}
       >
         <input
           ref={inputRef}
@@ -154,20 +155,18 @@ export function ReferencePhotoView(): React.ReactElement {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={referenceImage.previewUrl}
-            alt="Reference hairstyle preview"
+            alt={t('previewAlt')}
             className={styles.preview}
           />
         ) : isProcessing ? (
-          <span className={styles.placeholder}>Processing image…</span>
+          <span className={styles.placeholder}>{t('processingImage')}</span>
         ) : (
           <>
             <span className={styles.icon} aria-hidden="true">
               📸
             </span>
-            <span className={styles.placeholder}>
-              Drop a photo here, or click to choose
-            </span>
-            <span className={styles.hint}>JPEG, PNG, WebP — up to 2 MB (after resize)</span>
+            <span className={styles.placeholder}>{t('dropHint')}</span>
+            <span className={styles.hint}>{t('sizeHint')}</span>
           </>
         )}
       </div>
@@ -178,7 +177,7 @@ export function ReferencePhotoView(): React.ReactElement {
         disabled={!canSubmit}
         onClick={onSubmit}
       >
-        Try this hairstyle ✨
+        {t('submit')}
       </button>
     </div>
   );

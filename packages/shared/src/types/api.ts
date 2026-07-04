@@ -20,6 +20,13 @@ export interface ApiError {
 
 export interface TransformResult {
   resultImage: string;
+  /**
+   * Day 7 (ADR-010 / D3): DEPRECATED as UI display text. This is the
+   * canonical English name / debug label, written by the server for
+   * logs/analytics only. The web app MUST resolve the display name
+   * itself, from `styleId` via the i18n dictionary
+   * (`catalog.hairstyle.presets.<id>.name`), never from this field.
+   */
   style: string;
   processingTime: number;
   /** Generation row id in Supabase (for history lookups). */
@@ -30,9 +37,11 @@ export interface TransformResult {
 
 export interface HairstyleListItem {
   id: number;
-  name: string;
   gender: Gender;
   emoji: string;
+  // `name` REMOVED (Day 7, ADR-010 / D2). Display name lives in
+  // apps/web/src/messages/<locale>.json under
+  // `catalog.hairstyle.presets.<id>.name`, keyed by `id` above.
 }
 
 export interface HealthCheckResponse {
@@ -75,6 +84,12 @@ export interface Generation {
   userId: string;
   mode: GenerationMode;
   styleId: number | null;
+  /**
+   * Day 7 (ADR-010 / D3): DEPRECATED as UI display text for
+   * mode === 'preset' rows — same rule as TransformResult.style above.
+   * Resolve display name from `styleId` client-side. Still authoritative
+   * for mode === 'custom' is `customPrompt`, not this field.
+   */
   styleName: string;
   /** Present iff mode === 'custom'. */
   customPrompt: string | null;

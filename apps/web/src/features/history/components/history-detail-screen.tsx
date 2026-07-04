@@ -1,11 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 
 import type { Generation } from '@styleme/shared';
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
 
 import { useAppStore } from '@/lib/app-store';
+import { useStyleDisplayName } from '@/features/catalog/lib/use-style-display-name';
 
 import { useDeleteGeneration } from '../api/use-delete-generation';
 import type { GenerationListPage } from '@styleme/shared';
@@ -23,8 +25,16 @@ import styles from './history-detail-screen.module.css';
  * we fall back to a "not found" state.
  *
  * Actions: Regenerate, Download, Share (Web Share API), Delete.
+ *
+ * Day 7 (ADR-010 / D3) FIX: same bug as history-card.tsx — this screen
+ * used to render `generation.styleName` directly (title, share text,
+ * download filename). Fixed via `useStyleDisplayName`. Also: `mode`
+ * badge and all button/status strings moved to i18n (`history.*`);
+ * `relativeTime` now called with the active locale.
  */
 export function HistoryDetailScreen(): React.ReactElement {
+  const t = useTranslations('history');
+  const locale = useLocale();
   const id = useAppStore((s) => s.detailGenerationId);
   const setScreen = useAppStore((s) => s.setScreen);
   const setDetailGenerationId = useAppStore((s) => s.setDetailGenerationId);
@@ -48,6 +58,15 @@ export function HistoryDetailScreen(): React.ReactElement {
   const [shareState, setShareState] = useState<'idle' | 'sharing' | 'copied'>('idle');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  // Hooks must run unconditionally — call before the `!generation` early
+  // return below, using safe defaults when generation is null.
+  const resolvedName = useStyleDisplayName({
+    mode: generation?.mode ?? null,
+    styleId: generation?.styleId ?? null,
+    customPrompt: generation?.customPrompt ?? null,
+  });
+  const displayName = resolvedName ?? t('customStyleFallback');
+
   function goBack(): void {
     setDetailGenerationId(null);
     setScreen('history');
@@ -61,9 +80,7 @@ export function HistoryDetailScreen(): React.ReactElement {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `styleme-${(generation.styleName ?? 'result')
-        .replace(/\s+/g, '-')
-        .toLowerCase()}.jpg`;
+      a.download = `styleme-${displayName.replace(/\s+/g, '-').toLowerCase()}.jpg`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -86,8 +103,8 @@ export function HistoryDetailScreen(): React.ReactElement {
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({
           files: [file],
-          title: 'My look with StyleMe',
-          text: `Tried "${generation.styleName}" on StyleMe`,
+          title: t('shareTitle'),
+          text: t('shareText', { styleName: displayName }),
         });
         setShareState('idle');
         return;
@@ -120,29 +137,24 @@ export function HistoryDetailScreen(): React.ReactElement {
     return (
       <section className={styles.screen}>
         <button type="button" className={styles.backButton} onClick={goBack}>
-          ← Back
+          {t('back')}
         </button>
-        <p className={styles.notFound}>Generation not found.</p>
+        <p className={styles.notFound}>{t('notFound')}</p>
       </section>
     );
   }
-
-  const displayName =
-    generation.mode === 'custom'
-      ? generation.customPrompt ?? 'Custom style'
-      : generation.styleName;
 
   return (
     <section className={styles.screen}>
       <header className={styles.header}>
         <button type="button" className={styles.backButton} onClick={goBack}>
-          ← Back
+          {t('back')}
         </button>
         <div className={styles.titleBlock}>
           <h2 className={styles.title}>{displayName}</h2>
           <p className={styles.subtitle}>
-            <span className={styles.modeBadge}>{generation.mode}</span>
-            <span>{relativeTime(generation.createdAt)}</span>
+            <span className={styles.modeBadge}>{t(`modeBadge.${generation.mode}`)}</span>
+            <span>{relativeTime(generation.createdAt, locale)}</span>
           </p>
         </div>
       </header>
@@ -162,14 +174,14 @@ export function HistoryDetailScreen(): React.ReactElement {
           className={styles.primaryButton}
           onClick={handleRegenerate}
         >
-          Regenerate ✨
+          {t('regenerate')}
         </button>
         <button
           type="button"
           className={styles.secondaryButton}
           onClick={handleDownload}
         >
-          Download ⬇
+          {t('download')}
         </button>
         <button
           type="button"
@@ -177,10 +189,10 @@ export function HistoryDetailScreen(): React.ReactElement {
           onClick={handleShare}
         >
           {shareState === 'copied'
-            ? '✓ Link copied'
+            ? t('linkCopied')
             : shareState === 'sharing'
-              ? 'Sharing…'
-              : 'Share'}
+              ? t('sharing')
+              : t('share')}
         </button>
       </div>
 
@@ -193,10 +205,10 @@ export function HistoryDetailScreen(): React.ReactElement {
           aria-live="polite"
         >
           {del.isPending
-            ? 'Deleting…'
+            ? t('deleting')
             : confirmDelete
-              ? 'Tap again to confirm delete'
-              : 'Delete'}
+              ? t('confirmDelete')
+              : t('delete')}
         </button>
         {confirmDelete && !del.isPending && (
           <button
@@ -204,7 +216,7 @@ export function HistoryDetailScreen(): React.ReactElement {
             className={styles.dangerCancel}
             onClick={() => setConfirmDelete(false)}
           >
-            Cancel
+            {t('cancel')}
           </button>
         )}
       </div>
