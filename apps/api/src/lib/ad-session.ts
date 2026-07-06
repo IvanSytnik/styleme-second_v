@@ -30,13 +30,19 @@
  * flat "a|b" string round-trips identically on both backends. Numbers from
  * the daily counter are also coerced defensively (Upstash returns them typed).
  * ─────────────────────────────────────────────────────────────────────────
+ *
+ * Day 8 (ADR-011): logic moved into `createAdSessionService(redis)` so the
+ * dual-backend contract test can run identical scenarios against both the
+ * in-memory and the real Upstash backend. The module-level exports below
+ * are thin wrappers over the default (singleton-backed) instance — route
+ * handlers are untouched.
  */
 
 import { randomUUID } from 'node:crypto';
 
 import { AD_REWARDS } from '@styleme/shared';
 
-import { redis } from './redis';
+import { redis as defaultRedis, type RedisLike } from './redis';
 
 function todayUTC(): string {
   const d = new Date();
@@ -100,69 +106,94 @@ export interface IssueSessionCapReached {
   reason: 'cap';
 }
 
-export async function issueAdSession(
-  userId: string,
-): Promise<IssueSessionResult | IssueSessionCapReached> {
-  const used = toInt(await redis.get(dailyKey(userId)));
-  if (used >= AD_REWARDS.MAX_VIEWS_PER_DAY) {
-    return { ok: false, reason: 'cap' };
-  }
-
-  const nonce = randomUUID();
-  await redis.set(nonceKey(nonce), encodePayload(userId, Date.now()), {
-    ex: AD_REWARDS.SESSION_TTL_SECONDS,
-  });
-
-  return {
-    ok: true,
-    nonce,
-    minWatchSeconds: AD_REWARDS.MIN_WATCH_SECONDS,
-    viewsRemainingToday: Math.max(0, AD_REWARDS.MAX_VIEWS_PER_DAY - used - 1),
-  };
-}
+export type IssueResult = IssueSessionResult | IssueSessionCapReached;
 
 export type ClaimResult =
   | { ok: true }
   | { ok: false; reason: 'invalid' | 'too-early' | 'cap' };
 
-export async function claimAdSession(userId: string, nonce: string): Promise<ClaimResult> {
-  const raw = await redis.get(nonceKey(nonce));
-  const payload = decodePayload(raw);
-  if (!payload) {
-    // Never existed, expired, already burned, or malformed.
-    return { ok: false, reason: 'invalid' };
-  }
-
-  // Nonce must belong to the claiming user — blocks cross-user replay.
-  if (payload.userId !== userId) {
-    return { ok: false, reason: 'invalid' };
-  }
-
-  // Minimum watch time — the whole point. Nonce stays alive so an honest
-  // client that fired slightly early can retry after the remaining wait.
-  const elapsedSeconds = (Date.now() - payload.issuedAtMs) / 1000;
-  if (elapsedSeconds < AD_REWARDS.MIN_WATCH_SECONDS) {
-    return { ok: false, reason: 'too-early' };
-  }
-
-  // Daily cap re-check at claim time.
-  const used = toInt(await redis.get(dailyKey(userId)));
-  if (used >= AD_REWARDS.MAX_VIEWS_PER_DAY) {
-    return { ok: false, reason: 'cap' };
-  }
-
-  // Atomic burn. DEL returns the number of keys removed — exactly one
-  // concurrent claimant sees 1; replays/double-clicks/races see 0.
-  const burned = await redis.del(nonceKey(nonce));
-  if (burned !== 1) {
-    return { ok: false, reason: 'invalid' };
-  }
-
-  // Count the view. First increment of the day sets the midnight expiry.
-  const next = await redis.incr(dailyKey(userId));
-  if (next === 1) {
-    await redis.expire(dailyKey(userId), secondsUntilMidnightUTC());
-  }
-
-  return { ok: true };
+export interface AdSessionService {
+  issueAdSession(userId: string): Promise<IssueResult>;
+  claimAdSession(userId: string, nonce: string): Promise<ClaimResult>;
 }
+
+/**
+ * Factory. `now` is injectable for deterministic min-watch-time tests
+ * (avoids real 15-second sleeps in the suite).
+ */
+export function createAdSessionService(
+  redis: RedisLike,
+  now: () => number = Date.now,
+): AdSessionService {
+  async function issueAdSession(userId: string): Promise<IssueResult> {
+    const used = toInt(await redis.get(dailyKey(userId)));
+    if (used >= AD_REWARDS.MAX_VIEWS_PER_DAY) {
+      return { ok: false, reason: 'cap' };
+    }
+
+    const nonce = randomUUID();
+    await redis.set(nonceKey(nonce), encodePayload(userId, now()), {
+      ex: AD_REWARDS.SESSION_TTL_SECONDS,
+    });
+
+    return {
+      ok: true,
+      nonce,
+      minWatchSeconds: AD_REWARDS.MIN_WATCH_SECONDS,
+      viewsRemainingToday: Math.max(0, AD_REWARDS.MAX_VIEWS_PER_DAY - used - 1),
+    };
+  }
+
+  async function claimAdSession(userId: string, nonce: string): Promise<ClaimResult> {
+    const raw = await redis.get(nonceKey(nonce));
+    const payload = decodePayload(raw);
+    if (!payload) {
+      // Never existed, expired, already burned, or malformed.
+      return { ok: false, reason: 'invalid' };
+    }
+
+    // Nonce must belong to the claiming user — blocks cross-user replay.
+    if (payload.userId !== userId) {
+      return { ok: false, reason: 'invalid' };
+    }
+
+    // Minimum watch time — the whole point. Nonce stays alive so an honest
+    // client that fired slightly early can retry after the remaining wait.
+    const elapsedSeconds = (now() - payload.issuedAtMs) / 1000;
+    if (elapsedSeconds < AD_REWARDS.MIN_WATCH_SECONDS) {
+      return { ok: false, reason: 'too-early' };
+    }
+
+    // Daily cap re-check at claim time.
+    const used = toInt(await redis.get(dailyKey(userId)));
+    if (used >= AD_REWARDS.MAX_VIEWS_PER_DAY) {
+      return { ok: false, reason: 'cap' };
+    }
+
+    // Atomic burn. DEL returns the number of keys removed — exactly one
+    // concurrent claimant sees 1; replays/double-clicks/races see 0.
+    const burned = await redis.del(nonceKey(nonce));
+    if (burned !== 1) {
+      return { ok: false, reason: 'invalid' };
+    }
+
+    // Count the view. First increment of the day sets the midnight expiry.
+    const next = await redis.incr(dailyKey(userId));
+    if (next === 1) {
+      await redis.expire(dailyKey(userId), secondsUntilMidnightUTC());
+    }
+
+    return { ok: true };
+  }
+
+  return { issueAdSession, claimAdSession };
+}
+
+// ============================================================================
+// Default (singleton-backed) instance — route handlers import these.
+// ============================================================================
+
+const defaultService = createAdSessionService(defaultRedis);
+
+export const issueAdSession = defaultService.issueAdSession;
+export const claimAdSession = defaultService.claimAdSession;

@@ -19,6 +19,9 @@
  * app resolves display names client-side via i18n, keyed by styleId).
  * `'Reference photo'` literal below stays server-side only for the same
  * reason — the UI never reads `TransformResult.style` for display.
+ * Day 8 (ADR-011): retry/output helpers extracted to lib/replicate-retry.ts
+ * for unit testing; prompt typos fixed ("thehair" → "the hair",
+ * "Keepthe" → "Keep the").
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express';
@@ -44,6 +47,12 @@ import { getPrompt } from '@styleme/shared/hairstyles/prompts';
 import { insertGeneration } from '../db/generations';
 import { env } from '../env';
 import { consumeOne, getBalance } from '../lib/quota';
+import {
+  REPLICATE_MAX_ATTEMPTS,
+  extractResultUrl,
+  isReplicate429,
+  parseRetryAfterMs,
+} from '../lib/replicate-retry';
 import { logger } from '../logger';
 import { requireAuth } from '../middleware/auth';
 import { HttpError } from '../middleware/error-handler';
@@ -56,15 +65,6 @@ export const transformRouter = Router();
 const COST_CENTS_PER_GENERATION = 4;
 
 const replicate = new Replicate({ auth: env.REPLICATE_API_TOKEN });
-
-// ============================================================================
-// Replicate retry configuration (hotfix-429)
-// ============================================================================
-
-const REPLICATE_MAX_ATTEMPTS = 3;
-const REPLICATE_MAX_RETRY_WAIT_MS = 10_000;
-const REPLICATE_DEFAULT_RETRY_WAIT_MS = 5_000;
-const REPLICATE_JITTER_MS = 1_000;
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -92,49 +92,6 @@ async function optimizeImage(buffer: Buffer): Promise<Buffer> {
 
 const toDataUrl = (buffer: Buffer): string =>
   `data:image/jpeg;base64,${buffer.toString('base64')}`;
-
-function extractResultUrl(output: unknown): string {
-  if (
-    output &&
-    typeof output === 'object' &&
-    'url' in output &&
-    typeof (output as { url: () => string }).url === 'function'
-  ) {
-    return (output as { url: () => string }).url();
-  }
-  if (typeof output === 'string') return output;
-  if (Array.isArray(output) && output.length > 0) {
-    const first = output[0];
-    if (typeof first === 'string') return first;
-    if (
-      first &&
-      typeof first === 'object' &&
-      'url' in first &&
-      typeof (first as { url: () => string }).url === 'function'
-    ) {
-      return (first as { url: () => string }).url();
-    }
-  }
-  throw new HttpError(502, ERROR_CODES.UPSTREAM_FAILED, 'Unexpected output format from upstream');
-}
-
-function isReplicate429(err: unknown): boolean {
-  if (!(err instanceof Error)) return false;
-  if (err.name !== 'ApiError') return false;
-  const withResponse = err as Error & { response?: { status?: number } };
-  if (withResponse.response?.status === 429) return true;
-  return /\bstatus\s+429\b/i.test(err.message);
-}
-
-function parseRetryAfterMs(err: unknown): number {
-  const msg = err instanceof Error ? err.message : '';
-  const match = /"retry_after"\s*:\s*(\d+(?:\.\d+)?)/.exec(msg);
-  const seconds = match ? Number.parseFloat(match[1]!) : NaN;
-  const ms = Number.isFinite(seconds)
-    ? Math.min(seconds * 1000, REPLICATE_MAX_RETRY_WAIT_MS)
-    : REPLICATE_DEFAULT_RETRY_WAIT_MS;
-  return ms + Math.floor(Math.random() * REPLICATE_JITTER_MS);
-}
 
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
