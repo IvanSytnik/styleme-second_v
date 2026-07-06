@@ -9,6 +9,19 @@
  *
  * Day 6 (ADR-009): `del` typed as Promise<number> — its return value is
  * the arbiter for atomic nonce burn (first claimant gets 1, replays get 0).
+ *
+ * Day 8 (ADR-011): `RedisLike`, `InMemoryRedis` and `createUpstashRedis`
+ * are exported so the dual-backend contract tests can instantiate both
+ * backends explicitly. Runtime behavior is unchanged — the module still
+ * selects the singleton at import time.
+ *
+ * IMPORTANT semantic note for all consumers: the Upstash REST client
+ * AUTO-DESERIALIZES values on `get` — a stored "3" comes back as number 3,
+ * stored JSON comes back as an object. The in-memory backend returns raw
+ * strings. Therefore the interface types `get` as Promise<unknown> and
+ * every consumer MUST coerce (see toInt/decodePayload patterns). Never
+ * store JSON; store flat delimited strings. This is enforced by
+ * tests/ad-session.contract.test.ts.
  */
 
 import { Redis } from '@upstash/redis';
@@ -16,8 +29,13 @@ import { Redis } from '@upstash/redis';
 import { env, hasUpstash } from '../env';
 import { logger } from '../logger';
 
-interface RedisLike {
-  get(key: string): Promise<string | null>;
+export interface RedisLike {
+  /**
+   * Returns the stored value. NOTE: `unknown`, not `string | null` —
+   * Upstash auto-deserializes ("3" → 3), in-memory returns raw strings.
+   * Consumers must coerce defensively.
+   */
+  get(key: string): Promise<unknown>;
   set(key: string, value: string, opts?: { ex?: number }): Promise<unknown>;
   incr(key: string): Promise<number>;
   expire(key: string, seconds: number): Promise<unknown>;
@@ -26,7 +44,7 @@ interface RedisLike {
   del(key: string): Promise<number>;
 }
 
-class InMemoryRedis implements RedisLike {
+export class InMemoryRedis implements RedisLike {
   private store = new Map<string, { value: string; expiresAt: number | null }>();
 
   private cleanup(key: string): void {
@@ -79,12 +97,14 @@ class InMemoryRedis implements RedisLike {
   }
 }
 
+/** Explicit Upstash construction — used by the singleton AND by contract tests. */
+export function createUpstashRedis(url: string, token: string): RedisLike {
+  return new Redis({ url, token }) as unknown as RedisLike;
+}
+
 let _redis: RedisLike;
 if (hasUpstash) {
-  _redis = new Redis({
-    url: env.UPSTASH_REDIS_REST_URL!,
-    token: env.UPSTASH_REDIS_REST_TOKEN!,
-  }) as unknown as RedisLike;
+  _redis = createUpstashRedis(env.UPSTASH_REDIS_REST_URL!, env.UPSTASH_REDIS_REST_TOKEN!);
   logger.info('[redis] Using Upstash');
 } else {
   _redis = new InMemoryRedis();

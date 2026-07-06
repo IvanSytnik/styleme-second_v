@@ -11,12 +11,14 @@
  *
  * Day 5 (ADR-008): list + softDelete added; insert now carries `mode`
  * and `customPrompt` for deterministic regenerate flow.
+ * Day 8 (ADR-011): cursor codec extracted to lib/cursor.ts for testing.
  */
 
 import { randomUUID } from 'node:crypto';
 
 import type { Generation, GenerationMode } from '@styleme/shared';
 
+import { decodeCursor, encodeCursor } from '../lib/cursor';
 import { supabaseAdmin } from '../lib/supabase';
 import { logger } from '../logger';
 
@@ -65,35 +67,8 @@ export async function insertGeneration(input: InsertGenerationInput): Promise<st
 }
 
 // ============================================================================
-// List (cursor paginated)
+// List (cursor paginated) — codec lives in lib/cursor.ts (Day 8)
 // ============================================================================
-
-/**
- * Opaque cursor = base64(`${createdAt}|${id}`).
- * Encoded so clients can't parse or forge it; server treats it as a
- * bearer token that resolves to a `(created_at < X) OR (created_at = X AND id < Y)`
- * predicate for stable pagination even when many rows share the same second.
- */
-function encodeCursor(createdAt: string, id: string): string {
-  return Buffer.from(`${createdAt}|${id}`, 'utf8').toString('base64url');
-}
-
-function decodeCursor(cursor: string): { createdAt: string; id: string } | null {
-  try {
-    const raw = Buffer.from(cursor, 'base64url').toString('utf8');
-    const sepIdx = raw.indexOf('|');
-    if (sepIdx <= 0) return null;
-    const createdAt = raw.slice(0, sepIdx);
-    const id = raw.slice(sepIdx + 1);
-    if (!createdAt || !id) return null;
-    // Basic sanity — must parse as date, id must be uuid-ish
-    if (Number.isNaN(Date.parse(createdAt))) return null;
-    if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
-    return { createdAt, id };
-  } catch {
-    return null;
-  }
-}
 
 interface GenerationRow {
   id: string;

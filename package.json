@@ -15,10 +15,14 @@
     "dev:web": "npm run dev --workspace=@styleme/web",
     "build:web": "npm run build --workspace=@styleme/web",
     "start:web": "npm run start --workspace=@styleme/web",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "next-intl": "^4.13.1"
   }
 }
