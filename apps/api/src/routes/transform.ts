@@ -22,6 +22,9 @@
  * Day 8 (ADR-011): retry/output helpers extracted to lib/replicate-retry.ts
  * for unit testing; prompt typos fixed ("thehair" → "the hair",
  * "Keepthe" → "Keep the").
+ * Day 8 Wave 2a (ADR-012): REPLICATE_MOCK=1 short-circuits ONLY the model
+ * call (runReplicateMock) — auth, rate limit, quota, sharp, DB insert all
+ * stay real. Forbidden in production (env.ts fail-fast).
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express';
@@ -45,8 +48,9 @@ import {
 import { getPrompt } from '@styleme/shared/hairstyles/prompts';
 
 import { insertGeneration } from '../db/generations';
-import { env } from '../env';
+import { env, isReplicateMock } from '../env';
 import { consumeOne, getBalance } from '../lib/quota';
+import { runReplicateMock } from '../lib/replicate-mock';
 import {
   REPLICATE_MAX_ATTEMPTS,
   extractResultUrl,
@@ -97,6 +101,10 @@ const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 async function runReplicateWithRetry(input: unknown, userId: string): Promise<unknown> {
+  if (isReplicateMock) {
+    logger.warn({ userId }, '[transform] REPLICATE_MOCK active — returning canned image');
+    return runReplicateMock();
+  }
   let lastRetryAfterMs = 0;
   for (let attempt = 1; attempt <= REPLICATE_MAX_ATTEMPTS; attempt += 1) {
     try {

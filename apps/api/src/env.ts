@@ -4,6 +4,11 @@
  * Throws on import if required env vars are missing or malformed.
  * Production is strict; development allows in-memory fallbacks when
  * Upstash/Supabase credentials are absent.
+ *
+ * Day 8 (ADR-012): + REPLICATE_MOCK — replaces the Replicate call with a
+ * canned image for E2E tests. HARD-BLOCKED in production: a prod deploy
+ * with the mock enabled would silently serve junk "generations" and write
+ * garbage billing rows, so the process refuses to start.
  */
 
 import { z } from 'zod';
@@ -18,6 +23,9 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url().default('http://localhost:3000'),
 
   REPLICATE_API_TOKEN: z.string().min(1, 'REPLICATE_API_TOKEN is required'),
+
+  /** '1' → transform endpoints return a canned image (E2E only). */
+  REPLICATE_MOCK: z.enum(['0', '1']).default('0'),
 
   // Supabase — server-side
   SUPABASE_URL: z.string().url().optional(),
@@ -66,7 +74,16 @@ if (isProd) {
     console.error(`[env] Production requires: ${missing.join(', ')}`);
     process.exit(1);
   }
+
+  if (env.REPLICATE_MOCK === '1') {
+    // eslint-disable-next-line no-console
+    console.error(
+      '[env] REPLICATE_MOCK=1 is forbidden in production — it would serve fake generations and corrupt billing data.',
+    );
+    process.exit(1);
+  }
 }
 
 export const hasSupabase = Boolean(env.SUPABASE_URL);
 export const hasUpstash = Boolean(env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN);
+export const isReplicateMock = env.REPLICATE_MOCK === '1' && !isProd;

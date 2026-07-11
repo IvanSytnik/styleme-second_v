@@ -1,13 +1,14 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { api } from '@/lib/api-client';
 import { useAppStore } from '@/lib/app-store';
 import { describeError } from '@/lib/error-messages';
 import { useStyleDisplayName } from '@/features/catalog/lib/use-style-display-name';
+import { useAuth } from '@/lib/auth-provider';
 
 import styles from './processing-screen.module.css';
 
@@ -65,7 +66,9 @@ export function ProcessingScreen(): React.ReactElement {
   const queryClient = useQueryClient();
 
   const styleName = useStyleDisplayName({ mode, styleId, customPrompt });
-
+  const [renderError, setRenderError] = useState<unknown>(null);
+  const { isReady } = useAuth();
+ 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!image) throw new Error('Missing image');
@@ -93,6 +96,15 @@ export function ProcessingScreen(): React.ReactElement {
       // useStyleDisplayName from the same store fields we already have.
       setResult(data.resultImage);
     },
+    onError: (error) => {
+      // Symmetry with onSuccess: actively push error into local state so
+      // the component reliably re-renders into the errorBox branch. Relying
+      // on `mutation.isError` alone did not force a re-render once the
+      // request resolved (E2E confirmed: server returned 403 in 119ms but
+      // the screen stayed on "Creating your new look" forever). This is a
+      // real production bug for quota-exceeded and upstream-failure paths.
+      setRenderError(error);
+    },
   });
 
   // Hotfix #7: guards against Strict Mode's double effect invocation on
@@ -100,14 +112,15 @@ export function ProcessingScreen(): React.ReactElement {
   const hasFiredRef = useRef(false);
 
   useEffect(() => {
+    if (!isReady) return;          // ← ждём готовности anon-сессии: без токена transform уходит анонимным → 401
     if (hasFiredRef.current) return;
     hasFiredRef.current = true;
     mutation.mutate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isReady]);
 
-  if (mutation.isError) {
-    const err = describeError(mutation.error, tErrors);
+  if (renderError !== null) {
+    const err = describeError(renderError, tErrors);
     return (
       <div className={styles.screen}>
         <div className={styles.errorBox}>
@@ -125,7 +138,10 @@ export function ProcessingScreen(): React.ReactElement {
               <button
                 type="button"
                 className={styles.primaryButton}
-                onClick={() => mutation.mutate()}
+                onClick={() => {
+                  setRenderError(null);
+                  mutation.mutate();
+                }}
               >
                 {t('tryAgainButton')}
               </button>

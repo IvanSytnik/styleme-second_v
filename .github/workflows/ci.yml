@@ -1,14 +1,13 @@
-# CI — Day 8 (ADR-011)
+# CI — Day 8 (ADR-011 unit/contract, ADR-012 E2E)
 #
-# Gates every PR and push to main: typecheck → build → unit tests.
+# Job `ci` gates every PR/push: typecheck → build → unit tests.
+# Job `e2e` runs Playwright against mocked-Replicate + real Supabase auth.
+# E2E is NON-BLOCKING for now (continue-on-error) — we harden it to
+# blocking once it proves stable on CI hardware (target: 2 weeks green).
 #
-# The dual-backend contract test needs a DEDICATED test Upstash database
-# (never production). Configure repo secrets:
-#   TEST_UPSTASH_REDIS_REST_URL
-#   TEST_UPSTASH_REDIS_REST_TOKEN
-# When absent (e.g. forks), the Upstash half self-skips with a warning —
-# the suite stays green but does NOT prove backend parity. The `secrets.*`
-# expressions are safe on forked PRs: GitHub simply provides empty strings.
+# Repo secrets required:
+#   TEST_UPSTASH_REDIS_REST_URL / TEST_UPSTASH_REDIS_REST_TOKEN  (contract test)
+#   E2E_SUPABASE_URL / E2E_SUPABASE_ANON_KEY                     (E2E; anon key is public by nature)
 
 name: CI
 
@@ -48,7 +47,6 @@ jobs:
       - name: Build Web
         run: npm run build:web
         env:
-          # Build-time public env — dummies are fine, nothing runs.
           NEXT_PUBLIC_API_URL: http://localhost:3001
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key
@@ -62,3 +60,43 @@ jobs:
         env:
           TEST_UPSTASH_REDIS_REST_URL: ${{ secrets.TEST_UPSTASH_REDIS_REST_URL }}
           TEST_UPSTASH_REDIS_REST_TOKEN: ${{ secrets.TEST_UPSTASH_REDIS_REST_TOKEN }}
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build shared
+        run: npm run build:shared
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+
+      - name: Run E2E
+        run: npm run e2e --workspace=@styleme/web
+        env:
+          CI: 'true'
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+          SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7

@@ -45,3 +45,7 @@ temp/
 
 # Turbopack / Next.js
 .turbo/
+apps/web/.env.e2e
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/.next/
