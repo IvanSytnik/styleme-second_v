@@ -25,6 +25,10 @@
  * Day 8 Wave 2a (ADR-012): REPLICATE_MOCK=1 short-circuits ONLY the model
  * call (runReplicateMock) — auth, rate limit, quota, sharp, DB insert all
  * stay real. Forbidden in production (env.ts fail-fast).
+ * Day 8 Wave 2b: multer bumped 1.4.5-lts → 2.x (dicer→busboy, closes the
+ * ReDoS-class advisories). fileFilter now throws a typed UnsupportedMimeError
+ * so the error handler can map it (and MulterError size limits) to stable
+ * envelope codes instead of a generic 500.
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express';
@@ -59,7 +63,7 @@ import {
 } from '../lib/replicate-retry';
 import { logger } from '../logger';
 import { requireAuth } from '../middleware/auth';
-import { HttpError } from '../middleware/error-handler';
+import { HttpError, UnsupportedMimeError } from '../middleware/error-handler';
 import { transformRateLimit } from '../middleware/rate-limit';
 import { validate } from '../middleware/validate';
 
@@ -78,7 +82,9 @@ const upload = multer({
     if ((ACCEPTED_MIME_TYPES as readonly string[]).includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('UNSUPPORTED_MIME'));
+      // Typed error → discriminated by instanceof in the error handler,
+      // not by matching a magic string in `message`.
+      cb(new UnsupportedMimeError(file.mimetype));
     }
   },
 });
