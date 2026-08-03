@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import { resizeImage } from '@/lib/image-resize';
 import { useAppStore } from '@/lib/app-store';
+import { validateSourceFile } from '@/lib/validate-source-file';
 
 import styles from './upload-screen.module.css';
 
@@ -35,8 +36,13 @@ export function UploadScreen(): React.ReactElement {
   async function handleFile(file: File): Promise<void> {
     setError(null);
 
-    if (!file.type.startsWith('image/')) {
+    const problem = validateSourceFile(file);
+    if (problem === 'unsupportedFormat') {
       setError(t('invalidFile'));
+      return;
+    }
+    if (problem === 'tooLarge') {
+      setError(t('tooLarge'));
       return;
     }
 

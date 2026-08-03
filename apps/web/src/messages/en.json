@@ -141,7 +141,7 @@
       "previewAlt": "Reference hairstyle preview",
       "processingImage": "Processing image…",
       "dropHint": "Drop a photo here, or click to choose",
-      "sizeHint": "JPEG, PNG, WebP — up to 2 MB (after resize)",
+      "sizeHint": "JPEG, PNG, WebP",
       "submit": "Try this hairstyle ✨"
     },
     "modeSelector": {
@@ -288,10 +288,11 @@
     "titleAccent": "hairstyle",
     "subtitle": "Upload a clear photo of your face and try on 40+ AI hairstyles.",
     "invalidFile": "Please choose an image file (JPEG, PNG, or WebP).",
+    "tooLarge": "That image is too large. Please choose a file under 25 MB.",
     "genericError": "Failed to process the image",
     "preparing": "Preparing your photo…",
     "dropHint": "Drop a photo or click to choose",
-    "sizeHint": "JPEG, PNG or WebP · up to 10 MB",
+    "sizeHint": "JPEG, PNG or WebP",
     "uploadAriaLabel": "Upload photo",
     "takePhoto": "Take a photo",
     "privacy": "Your photo stays on your device until you start a generation. We don't store it after the result is delivered."

@@ -3,7 +3,21 @@
  */
 
 export const LIMITS = {
+  /**
+   * Server-side limit on the RESIZED payload that reaches the API (multer).
+   * Not the limit the user experiences — see MAX_SOURCE_SIZE_BYTES.
+   */
   MAX_FILE_SIZE_BYTES: 2 * 1024 * 1024,
+  /**
+   * Client-side memory guard on the ORIGINAL file the user picks, BEFORE
+   * the client-side Canvas resize. This is NOT the upload limit: the browser
+   * downscales the image to MAX_IMAGE_DIMENSION and the server receives
+   * ~100–300 KB. This ceiling exists only to stop createImageBitmap from
+   * exhausting memory on an enormous source (RAW-converted JPEG,
+   * uncompressed PNG). 25 MB covers essentially every real phone/camera
+   * photo while still rejecting anomalies.
+   */
+  MAX_SOURCE_SIZE_BYTES: 25 * 1024 * 1024,
   MAX_IMAGE_DIMENSION: 1024,
   JPEG_QUALITY: 90,
   /**
