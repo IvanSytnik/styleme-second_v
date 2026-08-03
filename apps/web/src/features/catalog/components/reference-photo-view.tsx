@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { ACCEPTED_MIME_TYPES, LIMITS } from '@styleme/shared';
 
 import { useAppStore } from '@/lib/app-store';
+import { validateSourceFile } from '@/lib/validate-source-file';
 
 import styles from './reference-photo-view.module.css';
 
@@ -36,17 +37,12 @@ export function ReferencePhotoView(): React.ReactElement {
 
   const processFile = useCallback(
     async (file: File): Promise<void> => {
-      // MIME allowlist
-      if (
-        !(ACCEPTED_MIME_TYPES as readonly string[]).includes(file.type)
-      ) {
+      const problem = validateSourceFile(file);
+      if (problem === 'unsupportedFormat') {
         toast.error(t('unsupportedFormat'));
         return;
       }
-      if (file.size > LIMITS.MAX_FILE_SIZE_BYTES * 5) {
-        // The client resize will make it small enough to upload — but if
-        // the source is enormous (>10 MB), the ImageBitmap step will
-        // burn memory. Reject early with a friendly message.
+      if (problem === 'tooLarge') {
         toast.error(t('tooLarge'));
         return;
       }

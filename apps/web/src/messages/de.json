@@ -141,7 +141,7 @@
       "previewAlt": "Vorschau der Referenzfrisur",
       "processingImage": "Bild wird verarbeitet…",
       "dropHint": "Foto hierher ziehen oder klicken zum Auswählen",
-      "sizeHint": "JPEG, PNG, WebP — bis zu 2 MB (nach Größenänderung)",
+      "sizeHint": "JPEG, PNG, WebP",
       "submit": "Diese Frisur ausprobieren ✨"
     },
     "modeSelector": {
@@ -288,10 +288,11 @@
     "titleAccent": "Frisur ausprobieren",
     "subtitle": "Laden Sie ein klares Foto Ihres Gesichts hoch und probieren Sie über 40 KI-Frisuren aus.",
     "invalidFile": "Bitte wählen Sie eine Bilddatei (JPEG, PNG oder WebP).",
+    "tooLarge": "Dieses Bild ist zu groß. Bitte wähle eine Datei unter 25 MB.",
     "genericError": "Bildverarbeitung fehlgeschlagen",
     "preparing": "Ihr Foto wird vorbereitet…",
     "dropHint": "Foto hierher ziehen oder klicken zum Auswählen",
-    "sizeHint": "JPEG, PNG oder WebP · bis zu 10 MB",
+    "sizeHint": "JPEG, PNG oder WebP",
     "uploadAriaLabel": "Foto hochladen",
     "takePhoto": "Foto aufnehmen",
     "privacy": "Ihr Foto bleibt bis zum Start der Generierung auf Ihrem Gerät. Wir speichern es nicht nach der Ergebnislieferung."
