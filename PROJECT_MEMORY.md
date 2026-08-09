@@ -241,3 +241,8 @@ See `docs/adr/`.
 ## Production Checklist
 
 *Filled out as items are completed. Tracked in `docs/production-checklist.md` once it exists.*
+
+Day 8: Wave 1 ✅, Wave 2a ✅, Wave 2b пункт 1/3 ✅ (multer 1.x→2.x + маппинг
+upload-ошибок в стабильные коды) + внеплановый hotfix валидации исходного
+файла (единый validateSourceFile, MAX_SOURCE_SIZE_BYTES=25MB). Осталось: 2/3
+npm audit triage (8 vulns), 3/3 next-intl cleanup.
