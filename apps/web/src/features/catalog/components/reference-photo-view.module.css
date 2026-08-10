@@ -7,7 +7,7 @@
 }
 
 .intro {
-  color: var(--color-text-muted, #6b7280);
+  color: var(--text-3);
   font-size: 0.95rem;
   line-height: 1.5;
   margin: 0;
@@ -21,8 +21,8 @@
   gap: 0.5rem;
   min-height: 14rem;
   padding: 1.5rem;
-  background: var(--color-surface, #fff);
-  border: 2px dashed var(--color-border, #e5e7eb);
+  background: var(--bg-1);
+  border: 2px dashed var(--border-1);
   border-radius: 0.75rem;
   cursor: pointer;
   transition:
@@ -34,18 +34,18 @@
 
 .dropzone:hover,
 .dropzone:focus-visible {
-  border-color: var(--color-accent, #7c3aed);
-  background: var(--color-surface-elevated, #f9fafb);
+  border-color: var(--accent);
+  background: var(--bg-1);
 }
 
 .dropzone:focus-visible {
-  outline: 2px solid var(--color-accent, #7c3aed);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 .dragging {
-  border-color: var(--color-accent, #7c3aed);
-  background: var(--color-accent-soft, #ede9fe);
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .hasPreview {
@@ -68,7 +68,7 @@
   display: block;
   max-height: 24rem;
   object-fit: contain;
-  background: var(--color-surface, #fff);
+  background: var(--bg-1);
 }
 
 .icon {
@@ -78,18 +78,18 @@
 
 .placeholder {
   font-weight: 500;
-  color: var(--color-text, #111);
+  color: var(--text-1);
   text-align: center;
 }
 
 .hint {
   font-size: 0.875rem;
-  color: var(--color-text-muted, #6b7280);
+  color: var(--text-3);
 }
 
 .submit {
   padding: 0.875rem 1.25rem;
-  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  background: var(--gradient);
   color: #fff;
   border: none;
   border-radius: 0.5rem;
@@ -108,7 +108,7 @@
 }
 
 .submit:focus-visible {
-  outline: 2px solid var(--color-accent, #7c3aed);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 

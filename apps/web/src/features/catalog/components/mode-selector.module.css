@@ -17,8 +17,8 @@
   align-items: flex-start;
   gap: 0.25rem;
   padding: 1rem;
-  background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e5e7eb);
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
   border-radius: 0.75rem;
   cursor: pointer;
   text-align: left;
@@ -26,12 +26,12 @@
     border-color 150ms ease,
     background 150ms ease,
     transform 100ms ease;
-  color: var(--color-text, #111);
+  color: var(--text-1);
 }
 
 .mode:hover {
-  border-color: var(--color-accent-soft, #ede9fe);
-  background: var(--color-surface-elevated, #f9fafb);
+  border-color: var(--accent-soft);
+  background: var(--bg-1);
 }
 
 .mode:active {
@@ -39,17 +39,17 @@
 }
 
 .mode:focus-visible {
-  outline: 2px solid var(--color-accent, #7c3aed);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 .selected {
-  border-color: var(--color-accent, #7c3aed);
-  background: var(--color-accent-soft, #ede9fe);
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .selected:hover {
-  border-color: var(--color-accent, #7c3aed);
+  border-color: var(--accent);
 }
 
 .icon {
@@ -64,5 +64,5 @@
 
 .description {
   font-size: 0.875rem;
-  color: var(--color-text-muted, #6b7280);
+  color: var(--text-3);
 }

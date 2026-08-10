@@ -24,8 +24,8 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  background: var(--color-surface, #fff);
-  border-top: 1px solid var(--color-border, #e5e7eb);
+  background: var(--bg-1);
+  border-top: 1px solid var(--border-1);
   backdrop-filter: blur(8px);
   z-index: 5;
 }
@@ -33,20 +33,20 @@
 .backButton {
   padding: 0.5rem 0.875rem;
   background: transparent;
-  border: 1px solid var(--color-border, #e5e7eb);
+  border: 1px solid var(--border-1);
   border-radius: 0.5rem;
-  color: var(--color-text, #111);
+  color: var(--text-1);
   font-weight: 500;
   cursor: pointer;
   transition: background 150ms ease;
 }
 
 .backButton:hover {
-  background: var(--color-surface-elevated, #f9fafb);
+  background: var(--bg-1);
 }
 
 .backButton:focus-visible {
-  outline: 2px solid var(--color-accent, #7c3aed);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -55,7 +55,7 @@
   height: 2.75rem;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid var(--color-border, #e5e7eb);
+  border: 2px solid var(--border-1);
   flex-shrink: 0;
 }
 
@@ -68,4 +68,10 @@
 
 .footerSpacer {
   width: 5rem;
+}
+
+@media (max-width: 640px) {
+  .screen {
+    padding-bottom: 9rem;
+  }
 }

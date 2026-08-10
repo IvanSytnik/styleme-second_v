@@ -9,16 +9,16 @@
 .label {
   font-weight: 600;
   font-size: 1rem;
-  color: var(--color-text, #111);
+  color: var(--text-1);
 }
 
 .textarea {
   width: 100%;
   padding: 0.75rem;
-  background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e5e7eb);
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
   border-radius: 0.5rem;
-  color: var(--color-text, #111);
+  color: var(--text-1);
   font-family: inherit;
   font-size: 1rem;
   line-height: 1.5;
@@ -29,8 +29,8 @@
 
 .textarea:focus {
   outline: none;
-  border-color: var(--color-accent, #7c3aed);
-  box-shadow: 0 0 0 3px var(--color-accent-soft, #ede9fe);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .textarea[aria-invalid='true'] {
@@ -46,12 +46,12 @@
 }
 
 .help {
-  color: var(--color-text-muted, #6b7280);
+  color: var(--text-3);
   flex: 1;
 }
 
 .counter {
-  color: var(--color-text-muted, #6b7280);
+  color: var(--text-3);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -68,7 +68,7 @@
 .submit {
   margin-top: 0.5rem;
   padding: 0.875rem 1.25rem;
-  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  background: var(--gradient);
   color: #fff;
   border: none;
   border-radius: 0.5rem;
@@ -87,7 +87,7 @@
 }
 
 .submit:focus-visible {
-  outline: 2px solid var(--color-accent, #7c3aed);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 

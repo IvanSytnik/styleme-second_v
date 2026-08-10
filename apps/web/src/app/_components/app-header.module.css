@@ -154,3 +154,12 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+@media (max-width: 640px) {
+  .right {
+    min-width: 0;
+  }
+  .balance {
+    display: none;
+  }
+}
