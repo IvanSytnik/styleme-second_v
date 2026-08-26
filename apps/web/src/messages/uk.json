@@ -253,6 +253,9 @@
     "bonusLabel": "Бонус",
     "openHistoryAriaLabel": "Відкрити історію",
     "historyLabel": "Історія",
+    "openMenuAriaLabel": "Відкрити меню",
+    "closeMenuAriaLabel": "Закрити меню",
+    "menuAriaLabel": "Меню",
     "languageSwitcherAriaLabel": "Обрати мову",
     "languageNames": {
       "en": "English",

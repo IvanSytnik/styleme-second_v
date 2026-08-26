@@ -10,6 +10,8 @@ import { ThemeSwitcher } from '@/features/theme/components/theme-switcher';
 import { LanguageSwitcher } from '@/features/theme/components/language-switcher';
 import { WatchAdButton } from '@/features/rewards/components/watch-ad-button';
 
+import { BurgerMenu } from './burger-menu';
+
 import styles from './app-header.module.css';
 
 /**
@@ -19,6 +21,10 @@ import styles from './app-header.module.css';
  * See features/rewards/. When NEXT_PUBLIC_AD_PROVIDER=off it renders
  * the Day 4 "Coming soon" state.
  * Day 7: strings moved to i18n (`header.*`); LanguageSwitcher added.
+ * Day 9 Wave B (Lesson 30): below 640px, `.desktopControls` (History /
+ * WatchAd / Language / Theme) is CSS-hidden and `BurgerMenu` — CSS-hidden
+ * above 640px — takes over via its own drawer. See burger-menu.tsx for
+ * the mount-duplication trade-off this implies.
  */
 export function AppHeader(): React.ReactElement {
   const t = useTranslations('header');
@@ -66,23 +72,32 @@ export function AppHeader(): React.ReactElement {
           </div>
         )}
 
-        {showHistoryButton && (
-          <button
-            type="button"
-            className={styles.historyButton}
-            onClick={() => setScreen('history')}
-            aria-label={t('openHistoryAriaLabel')}
-          >
-            <span aria-hidden="true">🕘</span>
-            <span className={styles.historyLabel}>{t('historyLabel')}</span>
-          </button>
-        )}
+        <div className={styles.desktopControls}>
+          {showHistoryButton && (
+            <button
+              type="button"
+              className={styles.historyButton}
+              onClick={() => setScreen('history')}
+              aria-label={t('openHistoryAriaLabel')}
+            >
+              <span aria-hidden="true">🕘</span>
+              <span className={styles.historyLabel}>{t('historyLabel')}</span>
+            </button>
+          )}
 
-        <WatchAdButton />
+          <WatchAdButton />
 
-        <LanguageSwitcher />
+          <LanguageSwitcher />
 
-        <ThemeSwitcher />
+          <ThemeSwitcher />
+        </div>
+
+        <BurgerMenu
+          showHistoryButton={showHistoryButton}
+          onOpenHistory={() => setScreen('history')}
+          historyLabel={t('historyLabel')}
+          openHistoryAriaLabel={t('openHistoryAriaLabel')}
+        />
       </div>
     </header>
   );

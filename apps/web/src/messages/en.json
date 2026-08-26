@@ -253,6 +253,9 @@
     "bonusLabel": "Bonus",
     "openHistoryAriaLabel": "Open history",
     "historyLabel": "History",
+    "openMenuAriaLabel": "Open menu",
+    "closeMenuAriaLabel": "Close menu",
+    "menuAriaLabel": "Menu",
     "languageSwitcherAriaLabel": "Choose language",
     "languageNames": {
       "en": "English",
