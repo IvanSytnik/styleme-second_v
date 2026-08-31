@@ -175,3 +175,26 @@ AFTER deploy + legal, not before.
 - Second domain as seam validation (target ≤1 day) — post first users.
 - GPT rewarded ads live wiring — after Ad Manager approval.
 - User photo persistence (true one-tap regenerate).
+**Wave B — visual/UX fixes — ✅ DONE**
+- Dark theme fixed: header + 5 catalog CSS modules referenced non-existent
+  var(--color-*) tokens → silent light fallback. Migrated to real tokens
+  (--bg-*, --text-*, --accent, --border-*, --gradient). Commits db23466 + 1645f9e.
+- Mobile burger menu (402d227): secondary controls (history/watch-ad/language/
+  theme) collapsed into a portal drawer below 640px; brand + hamburger in bar;
+  desktop unchanged. Portal to body (LESSON 13), SSR-safe mount guard via
+  useSyncExternalStore (LESSON 32), full a11y, drawer controls sized-to-content
+  + centered (LESSON 33). Catalog grid NOT touched (2 cols @375px is correct).
+  Tests green: api 36/36, shared 9/9, Playwright E2E 6/6, build:web.
+
+**CI E2E — fixed (was red 8/8 since inception, NOT a regression)**
+- Root cause: missing repo secrets → SUPABASE_URL='' → z.string().url() rejects
+  empty string → api process.exit(1) at env import → :3001 never bound →
+  Playwright "webServer timeout 60s". Deterministic, not a flake.
+- Fix: (1) env normalization ''→undefined for all optional Supabase/Upstash
+  vars (commit 209547c, LESSON 34); (2) repo secrets E2E_SUPABASE_URL /
+  E2E_SUPABASE_ANON_KEY (legacy anon JWT, public by nature).
+- FIRST GREEN: run 33359558490 (both ci + e2e ✓). continue-on-error still ON
+  by design — start the "2 weeks green" countdown before flipping e2e to
+  blocking.
+- Minor debt: Node 20 deprecation warning on actions/*@v4 → bump to @v5 later
+  (warning only, jobs pass).
