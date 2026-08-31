@@ -16,6 +16,24 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
+/**
+ * Treats an empty string as "not set".
+ *
+ * Orchestrators substitute '' for an absent value rather than omitting the
+ * key — GitHub Actions does it for a missing secret, and playwright.config's
+ * webServer env does it via `process.env.X ?? ''`. Zod's `.optional()` admits
+ * only `undefined`, so an absent secret reached `.url()` as an empty string
+ * and hard-failed env parsing: the api exited at import, never bound its
+ * port, and E2E surfaced it as an opaque "Timed out waiting 60000ms from
+ * config.webServer" instead of "this env var is not configured".
+ *
+ * Absent must read as absent so the documented dev/test fallbacks (deterministic
+ * dev user, in-memory Redis) engage. Production strictness is unaffected: the
+ * isProd block below still refuses to start on a missing value.
+ */
+const optionalEnv = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((v) => (v === '' ? undefined : v), schema.optional());
+
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3001),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -28,19 +46,19 @@ const envSchema = z.object({
   REPLICATE_MOCK: z.enum(['0', '1']).default('0'),
 
   // Supabase — server-side
-  SUPABASE_URL: z.string().url().optional(),
-  SUPABASE_ANON_KEY: z.string().optional(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  SUPABASE_URL: optionalEnv(z.string().url()),
+  SUPABASE_ANON_KEY: optionalEnv(z.string()),
+  SUPABASE_SERVICE_ROLE_KEY: optionalEnv(z.string()),
   /**
    * Legacy HS256 JWT Secret. Required only for older Supabase projects
    * that still sign with HS256. Newer projects use asymmetric keys
    * (ES256/RS256) verified via the JWKS endpoint — for those this is unused.
    */
-  SUPABASE_JWT_SECRET: z.string().optional(),
+  SUPABASE_JWT_SECRET: optionalEnv(z.string()),
 
   // Upstash Redis
-  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  UPSTASH_REDIS_REST_URL: optionalEnv(z.string().url()),
+  UPSTASH_REDIS_REST_TOKEN: optionalEnv(z.string()),
 
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 });
